@@ -1,0 +1,1 @@
+MAX_PARTY_SIZE = 8
