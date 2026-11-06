@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="680" height="360" viewBox="0 0 680 360" role="img" aria-label="api calls party, games, and stats. party calls games and sudoku. games calls sudoku.">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 8" refX="9" refY="4" markerWidth="8" markerHeight="8" orient="auto">
+      <path d="M 0 0 L 10 4 L 0 8 z" fill="#d5d5d5"/>
+    </marker>
+  </defs>
+  <style>
+    .box { fill: #3a3a3a; stroke: #d5d5d5; stroke-width: 1.5; }
+    .label { fill: #f4f4f4; font-family: ui-sans-serif, system-ui, sans-serif; font-size: 15px; text-anchor: middle; dominant-baseline: central; }
+    .edge { fill: none; stroke: #d5d5d5; stroke-width: 1.5; marker-end: url(#arrow); }
+  </style>
+  <rect class="box" x="272" y="16" width="136" height="40" rx="4"/>
+  <text class="label" x="340" y="36">api</text>
+  <rect class="box" x="40" y="108" width="168" height="40" rx="4"/>
+  <text class="label" x="124" y="128">services/party</text>
+  <rect class="box" x="248" y="188" width="184" height="40" rx="4"/>
+  <text class="label" x="340" y="208">services/games</text>
+  <rect class="box" x="488" y="108" width="168" height="40" rx="4"/>
+  <text class="label" x="572" y="128">services/stats</text>
+  <rect class="box" x="40" y="288" width="176" height="40" rx="4"/>
+  <text class="label" x="128" y="308">services/sudoku</text>
+  <path class="edge" d="M 270 36 H 160 V 106"/>
+  <path class="edge" d="M 410 36 H 572 V 106"/>
+  <path class="edge" d="M 392 56 V 186"/>
+  <path class="edge" d="M 210 128 H 228 V 208 H 246"/>
+  <path class="edge" d="M 96 150 V 286"/>
+  <path class="edge" d="M 300 230 V 258 H 168 V 286"/>
+</svg>
