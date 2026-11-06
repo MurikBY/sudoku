@@ -1,0 +1,32 @@
+services:
+  backend:
+    ports:
+      - "${BACKEND_DEV_PORT:?set BACKEND_DEV_PORT in .env}:8000"
+    labels: !reset []
+    environment:
+      TELEGRAM_USE_POLLING: "true"
+
+  frontend:
+    image: node:22-alpine
+    pull_policy: always
+    build: !reset null
+    working_dir: /app
+    command: sh -c "npm install && npm run dev -- --host 0.0.0.0 --port 5173"
+    environment:
+      API_PROXY_TARGET: http://backend:8000
+      VITE_DEV_INIT_DATA: "${VITE_DEV_INIT_DATA:-}"
+    ports:
+      - "${FRONTEND_DEV_PORT:?set FRONTEND_DEV_PORT in .env}:5173"
+    volumes:
+      - ./frontend:/app
+      - frontend_node_modules:/app/node_modules
+    labels: !reset []
+    healthcheck:
+      disable: true
+
+networks:
+  proxy:
+    external: false
+
+volumes:
+  frontend_node_modules:
