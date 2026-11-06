@@ -1,0 +1,11 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "entry": ["index.html"],
+  "project": ["src/**/*.{ts,tsx}", "vite.buildIdPlugin.ts", "vite.initialThemePlugin.ts"],
+  "ignoreDependencies": [
+    "@fontsource/ibm-plex-sans",
+    "@fontsource/source-serif-4",
+    "tailwindcss",
+    "tw-animate-css"
+  ]
+}

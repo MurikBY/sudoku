@@ -1,0 +1,6 @@
+dist
+node_modules
+package-lock.json
+# Generator output. CI compares these bytes to the generator, so Prettier must not rewrite them.
+src/api/openapi.json
+src/api/schema.d.ts
