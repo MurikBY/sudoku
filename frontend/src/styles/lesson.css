@@ -1,0 +1,92 @@
+.gazette-lesson-confirmation {
+  max-width: 22rem;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--ink);
+}
+
+.lesson-brief-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  background: color-mix(in oklch, var(--background) 62%, transparent);
+}
+
+.lesson-brief-card {
+  width: min(100%, 22rem);
+  padding: 1.15rem 1.1rem 1.05rem;
+  border: 1px solid color-mix(in oklch, var(--rule) 28%, transparent);
+  background: var(--card);
+  text-align: center;
+}
+
+.lesson-brief-title {
+  margin: 0;
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 700;
+  font-style: normal;
+  line-height: 1.2;
+  color: var(--ink);
+}
+
+.lesson-brief-body {
+  margin: 0.7rem 0 1.05rem;
+  font-size: 0.95rem;
+  line-height: 1.4;
+  color: var(--foreground);
+}
+
+.lesson-brief-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.55rem;
+  margin-top: 1.05rem;
+}
+
+.lesson-success-copy {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.lesson-success-copy .lesson-brief-body {
+  margin: 0;
+}
+
+.lesson-brief-card-success .lesson-brief-actions {
+  gap: 0.22rem;
+  margin-top: 1.55rem;
+}
+
+.lesson-brief-action {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 0.35rem 0;
+  border: 0;
+  background: transparent;
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--primary);
+  cursor: pointer;
+}
+
+.lesson-brief-action:hover:not(:disabled) {
+  opacity: 0.82;
+}
+
+.lesson-brief-action:disabled {
+  cursor: default;
+  opacity: 0.45;
+}

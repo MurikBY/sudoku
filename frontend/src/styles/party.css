@@ -1,0 +1,399 @@
+.party-lobby-backdrop {
+  position: fixed;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: var(--app-vh, 100dvh);
+  z-index: 40;
+  display: flex;
+  align-items: center;
+  align-items: safe center;
+  justify-content: center;
+  overflow-y: auto;
+  padding: 1.25rem 1.25rem calc(1.25rem + var(--keyboard-inset));
+  background: color-mix(in oklch, var(--background) 55%, transparent);
+  backdrop-filter: blur(2px);
+}
+
+.party-lobby-panel {
+  width: min(100%, 17.5rem);
+  padding: 0.85rem 0.9rem 1rem;
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  background-color: var(--paper-mid);
+  background-image: var(--paper-wash);
+  border: 1px solid color-mix(in oklch, var(--rule) 55%, transparent);
+  box-shadow: 0 12px 40px color-mix(in oklch, var(--foreground) 12%, transparent);
+}
+
+.party-lobby-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: var(--paper-grain-opacity);
+  mix-blend-mode: var(--paper-grain-blend);
+  background-image: var(--paper-grain);
+  background-size: 160px 160px;
+}
+
+.party-lobby-panel::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: var(--paper-flecks);
+  background-size: 200px 200px;
+  background-repeat: repeat;
+}
+
+.party-lobby-panel > * {
+  position: relative;
+  z-index: 1;
+}
+
+.party-lobby-title {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  text-align: center;
+  color: var(--foreground);
+}
+
+.party-lobby-dismiss {
+  position: absolute;
+  top: 0.35rem;
+  right: 0.35rem;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--muted-foreground);
+  transition: color 140ms ease;
+}
+
+.party-lobby-dismiss:hover {
+  color: var(--foreground);
+}
+
+.party-lobby-dismiss:disabled {
+  opacity: 0.45;
+}
+
+.party-lobby-actions,
+.party-lobby-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.65rem;
+}
+
+.party-lobby-actions-row {
+  flex-direction: row;
+  justify-content: center;
+  gap: 1.1rem;
+}
+
+.party-lobby-cta {
+  font-size: 1.05rem;
+}
+
+.party-lobby-secondary {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+  background: transparent;
+  border: 0;
+  padding: 0.25rem 0.4rem;
+}
+
+.party-lobby-code-wrap {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.28rem;
+  min-height: 4.1rem;
+}
+
+.party-lobby-code {
+  font-family: var(--font-mono);
+  font-size: 1.55rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  color: var(--primary);
+  background: transparent;
+  border: 0;
+  padding: 0.1rem 0.3rem;
+  cursor: pointer;
+  transition:
+    transform 180ms ease,
+    opacity 180ms ease;
+}
+
+.party-lobby-code:hover {
+  opacity: 0.82;
+}
+
+.party-lobby-code-pulse {
+  animation: party-code-pulse 280ms ease;
+}
+
+.party-lobby-code-copied {
+  color: var(--foreground);
+}
+
+.party-lobby-code-hint {
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
+.party-lobby-copied-toast {
+  position: absolute;
+  top: calc(100% - 0.15rem);
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  color: var(--primary);
+  opacity: 0;
+  transform: translateY(0.25rem);
+  pointer-events: none;
+  transition:
+    opacity 180ms ease,
+    transform 180ms ease;
+}
+
+.party-lobby-copied-toast-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+@keyframes party-code-pulse {
+  0% {
+    transform: scale(1);
+  }
+  45% {
+    transform: scale(0.94);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.party-lobby-label {
+  font-family: var(--font-mono);
+  font-size: 0.58rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
+.party-lobby-join-row {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.party-lobby-input {
+  width: 9.6ch;
+  flex: 0 0 auto;
+  min-width: 0;
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  letter-spacing: 0.14em;
+  text-align: center;
+  text-transform: uppercase;
+  color: var(--foreground);
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid color-mix(in oklch, var(--rule) 55%, transparent);
+  padding: 0.3rem 0.15rem;
+  outline: none;
+}
+
+.party-lobby-input:focus {
+  border-bottom-color: var(--primary);
+}
+
+.party-lobby-members {
+  width: 100%;
+  margin-top: 0.2rem;
+  padding: 0;
+  list-style: none;
+}
+
+.party-lobby-members li {
+  padding: 0.28rem 0.15rem;
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  text-align: center;
+  color: var(--foreground);
+}
+
+.party-lobby-waiting {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  text-align: center;
+  font-family: var(--font-sans);
+  font-size: 0.86rem;
+  color: var(--foreground);
+}
+
+.party-lobby-closed {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 5.5rem;
+  padding: 0.35rem 1.5rem 0.5rem;
+  text-align: center;
+}
+
+.party-lobby-closed-dismiss {
+  position: absolute;
+  top: -0.15rem;
+  right: -0.15rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  color: var(--muted-foreground);
+  background: transparent;
+  border: 0;
+}
+
+.party-lobby-closed-dismiss:hover {
+  color: var(--foreground);
+}
+
+.party-lobby-closed-message {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 0.92rem;
+  line-height: 1.35;
+  color: var(--foreground);
+}
+
+.party-progress-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: default;
+}
+
+.party-progress-panel {
+  position: absolute;
+  top: calc(max(0.8rem, var(--safe-top)) + 2.35rem);
+  left: 1rem;
+  z-index: 21;
+  width: max-content;
+  max-width: calc(100% - 2rem);
+  margin: 0;
+  padding: 0.55rem 0.7rem 0.5rem;
+  isolation: isolate;
+  overflow: hidden;
+  border: 1px solid color-mix(in oklch, var(--rule) 55%, transparent);
+  background-color: var(--paper-mid);
+  background-image: var(--paper-wash);
+  box-shadow: 0 0.35rem 0.9rem color-mix(in oklch, var(--ink) 12%, transparent);
+}
+
+.party-progress-panel::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  opacity: var(--paper-grain-opacity);
+  mix-blend-mode: var(--paper-grain-blend);
+  background-image: var(--paper-grain);
+  background-size: 160px 160px;
+}
+
+.party-progress-panel::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background-image: var(--paper-flecks);
+  background-size: 200px 200px;
+  background-repeat: repeat;
+}
+
+.party-progress-panel > * {
+  position: relative;
+  z-index: 1;
+}
+
+.party-progress-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.28rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.party-progress-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.75rem;
+  white-space: nowrap;
+}
+
+.party-progress-name {
+  flex: 0 1 auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 0.82rem;
+  line-height: 1.25;
+  color: var(--ink);
+}
+
+.party-progress-score {
+  flex: 0 0 auto;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+  color: var(--muted-foreground);
+}
+
+.party-progress-empty,
+.party-progress-error {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.3;
+  color: var(--muted-foreground);
+}
+
+.party-progress-error {
+  color: var(--destructive);
+}

@@ -1,0 +1,109 @@
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --radius-sm: 0.15rem;
+  --radius-md: 0.25rem;
+  --radius-lg: 0.35rem;
+  --radius-xl: 0.5rem;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --font-sans: "Source Serif 4", "Times New Roman", serif;
+  --font-display: "Source Serif 4", "Times New Roman", serif;
+  --font-mono: "Source Serif 4", "Times New Roman", serif;
+}
+
+:root,
+[data-theme="gazette"] {
+  --radius: 0.25rem;
+  --background: #f3ecdf;
+  --foreground: #1a1a1a;
+  --card: #f6efe3;
+  --card-foreground: #1a1a1a;
+  --popover: #f6efe3;
+  --popover-foreground: #1a1a1a;
+  --primary: #8b1e1e;
+  --primary-foreground: #f6efe3;
+  --play-accent: #1d5f91;
+  --secondary: #e8dfcc;
+  --secondary-foreground: #1a1a1a;
+  --muted: #ebe4d6;
+  --muted-foreground: #6b6458;
+  --accent: #ebe4d6;
+  --accent-foreground: #1a1a1a;
+  --destructive: #8b1e1e;
+  --border: #c9c2b5;
+  --input: #c9c2b5;
+  --ring: #8b1e1e;
+  --ink: #1a1a1a;
+  --rule: #2a2a2a;
+  --paper-line: #d4cdc0;
+  --paper-top: #f3ecdf;
+  --paper-mid: #ebe4d6;
+  --paper-bottom: #e0d7c6;
+  --paper-wash: linear-gradient(
+    180deg,
+    var(--paper-top) 0%,
+    var(--paper-mid) 48%,
+    var(--paper-bottom) 100%
+  );
+  --paper-grain-opacity: 0.16;
+  --paper-grain-blend: multiply;
+  --paper-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0.28 0 0 0 0 0.24 0 0 0 0 0.18 0 0 0 0.65 0'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)'/%3E%3C/svg%3E");
+  --paper-flecks: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Cdefs%3E%3Cfilter id='w' x='-40%25' y='-40%25' width='180%25' height='180%25'%3E%3CfeTurbulence type='turbulence' baseFrequency='1.4' numOctaves='2' result='t'/%3E%3CfeDisplacementMap in='SourceGraphic' in2='t' scale='0.9' xChannelSelector='R' yChannelSelector='G'/%3E%3C/filter%3E%3C/defs%3E%3Cg filter='url(%23w)' fill='none' stroke='%231a1a1a' stroke-linecap='round'%3E%3Cpath d='M31 104c3.2-.9 6.1.6 8.4 2.4' stroke-opacity='0.28' stroke-width='0.4'/%3E%3Cpath d='M121 78c3.6 1.1 5.2-.8 7.4-2.6' stroke-opacity='0.24' stroke-width='0.35'/%3E%3Cpath d='M64 168c2.8 1.6 5.9 1.1 8.1-.6' stroke-opacity='0.26' stroke-width='0.38'/%3E%3Cpath d='M148 118c-2.9 1.5-3.8 3.6-3.1 5.9' stroke-opacity='0.22' stroke-width='0.35'/%3E%3C/g%3E%3Cg filter='url(%23w)' fill='%231a1a1a'%3E%3Ccircle cx='42' cy='58' r='0.55' fill-opacity='0.26'/%3E%3Ccircle cx='156' cy='39' r='0.45' fill-opacity='0.22'/%3E%3Ccircle cx='98' cy='142' r='0.6' fill-opacity='0.28'/%3E%3Ccircle cx='171' cy='157' r='0.5' fill-opacity='0.2'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+html.dark {
+  color-scheme: dark;
+  --background: #1c1814;
+  --foreground: #e8dfd0;
+  --card: #241f19;
+  --card-foreground: #e8dfd0;
+  --popover: #241f19;
+  --popover-foreground: #e8dfd0;
+  --primary: #c44a3a;
+  --primary-foreground: #f6efe3;
+  --play-accent: #7eb3d4;
+  --secondary: #2a241e;
+  --secondary-foreground: #e8dfd0;
+  --muted: #2a251f;
+  --muted-foreground: #a39888;
+  --accent: #2a251f;
+  --accent-foreground: #e8dfd0;
+  --destructive: #d45c4e;
+  --border: #4a4338;
+  --input: #4a4338;
+  --ring: #c44a3a;
+  --ink: #efe6d6;
+  --rule: #cfc4b0;
+  --paper-line: #3a342c;
+  --paper-top: #241e18;
+  --paper-mid: #1c1814;
+  --paper-bottom: #14110e;
+  --paper-grain-opacity: 0.28;
+  --paper-grain-blend: overlay;
+  --paper-flecks: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200' viewBox='0 0 200 200'%3E%3Cg fill='%23e8dfd0'%3E%3Ccircle cx='42' cy='58' r='0.55' fill-opacity='0.22'/%3E%3Ccircle cx='156' cy='39' r='0.45' fill-opacity='0.18'/%3E%3Ccircle cx='98' cy='142' r='0.6' fill-opacity='0.24'/%3E%3Ccircle cx='171' cy='157' r='0.5' fill-opacity='0.16'/%3E%3Ccircle cx='31' cy='104' r='0.4' fill-opacity='0.2'/%3E%3Ccircle cx='121' cy='78' r='0.45' fill-opacity='0.18'/%3E%3C/g%3E%3C/svg%3E");
+}
+
+:root {
+  --safe-top: var(--tg-safe-area-inset-top, env(safe-area-inset-top, 0px));
+  --safe-right: var(--tg-safe-area-inset-right, env(safe-area-inset-right, 0px));
+  --safe-bottom: var(--tg-safe-area-inset-bottom, env(safe-area-inset-bottom, 0px));
+  --safe-left: var(--tg-safe-area-inset-left, env(safe-area-inset-left, 0px));
+  --keyboard-inset: 0px;
+}

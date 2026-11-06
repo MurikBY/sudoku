@@ -1,0 +1,1442 @@
+.gazette-stats-masthead {
+  padding-top: max(0.85rem, var(--safe-top));
+  padding-bottom: 0;
+}
+
+.gazette-stats-masthead-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 1.7rem;
+}
+
+.gazette-stats-masthead-title {
+  font-size: 1.45rem;
+  line-height: 1;
+}
+
+.gazette-stats-mode {
+  position: absolute;
+  left: 0.45rem;
+  top: 50%;
+  transform: translateY(calc(-50% + 0.12rem));
+  display: flex;
+  align-items: center;
+}
+
+.gazette-stats-mode-tab {
+  padding: 0.1rem 0;
+  font-family: var(--font-display);
+  font-size: 1.32rem;
+  font-weight: 700;
+  font-style: normal;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  color: color-mix(in oklch, var(--muted-foreground) 70%, transparent);
+  background: transparent;
+  border: 0;
+  transition: color 140ms ease;
+}
+
+.gazette-stats-mode-tab:hover {
+  color: var(--ink);
+}
+
+.gazette-stats-mode-tab-active {
+  color: var(--ink);
+}
+
+.gazette-stats-go-home {
+  position: absolute;
+  right: 0.45rem;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  line-height: 1;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+  transition: color 140ms ease;
+}
+
+.gazette-stats-go-home:hover {
+  color: var(--primary);
+}
+
+.gazette-stats-pvp-masthead-title-block {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.gazette-stats-pvp-masthead-title {
+  margin: 0.55rem 0 0;
+  padding: 0 0.5rem;
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 700;
+  font-style: italic;
+  line-height: 1.15;
+  text-align: center;
+  color: var(--ink);
+  transform: translateY(-0.04em);
+}
+
+.gazette-stats-pvp-masthead-title-list {
+  margin: 0.55rem 0 0;
+  padding: 0 0.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  font-weight: 600;
+  font-style: normal;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  line-height: 1.15;
+  text-align: center;
+  color: var(--ink);
+  transform: translateY(-0.04em);
+}
+
+.gazette-stats-pvp-difficulty {
+  margin: 0.55rem 0 0;
+  padding: 0 0.15rem;
+  font-family: var(--font-mono);
+  font-size: 0.98rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-align: center;
+  color: var(--muted-foreground);
+}
+
+.gazette-stats-pvp-list {
+  list-style: none;
+  margin: 0;
+  padding: 0.15rem 0;
+}
+
+.gazette-stats-period {
+  flex-wrap: wrap;
+  gap: 0;
+  align-content: center;
+}
+
+.gazette-stats-ledger-solo {
+  padding-top: 0;
+}
+
+.gazette-stats-ledger-body
+  > .gazette-stats-chrome
+  + .gazette-stats-ledger-block
+  > .gazette-stats-ledger-rule:first-child {
+  margin-top: 0;
+}
+
+.gazette-stats-ledger-body
+  > .gazette-stats-ledger-block:has(+ .gazette-stats-chrome)
+  > .gazette-stats-ledger-rule:last-child {
+  margin-bottom: 0;
+}
+
+.gazette-stats-period-item {
+  display: inline-flex;
+  align-items: center;
+}
+
+.gazette-stats-period-sep {
+  margin: 0 0.4rem;
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  line-height: 1;
+  letter-spacing: 0.04em;
+  color: color-mix(in oklch, var(--rule) 50%, transparent);
+  pointer-events: none;
+}
+
+.gazette-stats-mode-sep-dot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 0.38rem;
+  font-family: var(--font-display);
+  font-size: 1.15rem;
+  font-weight: 700;
+  font-style: normal;
+  line-height: 1;
+  color: color-mix(in oklch, var(--muted-foreground) 70%, transparent);
+  transform: translateY(0.08em);
+  pointer-events: none;
+}
+
+.gazette-stats-period-tab {
+  padding: 0;
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: color-mix(in oklch, var(--muted-foreground) 72%, transparent);
+  background: transparent;
+  border: 0;
+  transition: color 140ms ease;
+}
+
+.gazette-stats-period-tab:hover {
+  color: var(--ink);
+}
+
+.gazette-stats-period-tab-active {
+  color: var(--ink);
+}
+
+.gazette-stats-ledger-refreshing {
+  opacity: 0.55;
+  transition: opacity 140ms ease;
+}
+
+.gazette-stats-ledger {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 0;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  padding: 0.35rem 1.15rem max(0.75rem, var(--safe-bottom));
+}
+
+.gazette-stats-ledger.gazette-guide-ledger-index {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+.gazette-stats-ledger-body {
+  display: flex;
+  flex: 1 0 auto;
+  flex-direction: column;
+  gap: 0;
+  min-height: 100%;
+}
+
+.gazette-stats-ledger-block {
+  flex: 0 0 auto;
+}
+
+.gazette-stats-chrome {
+  display: flex;
+  flex: 1 1 0;
+  align-items: center;
+  align-content: center;
+  justify-content: center;
+}
+
+.gazette-stats-chrome.gazette-stats-period {
+  flex-grow: 0.82;
+}
+
+.gazette-stats-chrome-fact {
+  flex-grow: 1.2;
+}
+
+.gazette-stats-chrome-reset {
+  flex-grow: 0.7;
+}
+
+.gazette-stats-ledger-rule {
+  width: 100%;
+  margin: 0.35rem 0 0.35rem;
+  height: 3px;
+  border-top: 1px solid color-mix(in oklch, var(--rule) 40%, transparent);
+  border-bottom: 1px solid color-mix(in oklch, var(--rule) 40%, transparent);
+}
+
+.gazette-stats-overview-row {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+  padding: 0.4rem 0;
+  font-size: 0.875rem;
+  line-height: 1.2;
+}
+
+.gazette-stats-overview-label {
+  flex: 0 1 auto;
+  color: var(--muted-foreground);
+}
+
+.gazette-stats-overview-dots {
+  flex: 1 1 auto;
+  min-width: 1.25rem;
+  border-bottom: 1px dotted color-mix(in oklch, var(--rule) 28%, transparent);
+  transform: translateY(-0.18em);
+}
+
+.gazette-stats-overview-value {
+  flex: 0 0 auto;
+  font-variant-numeric: tabular-nums;
+  color: var(--foreground);
+}
+
+.gazette-stats-percent {
+  font-family: "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  font-size: 0.95em;
+  font-weight: 400;
+  letter-spacing: 0;
+  margin-left: 0.04em;
+}
+
+.gazette-stats-rate-count {
+  font-weight: 400;
+  color: var(--muted-foreground);
+}
+
+.gazette-stats-pvp-toolbar {
+  display: flex;
+  align-items: center;
+  padding: 0.55rem 1rem 0;
+}
+
+.gazette-stats-pvp-back {
+  display: inline-flex;
+  align-items: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  line-height: 1;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+  transition: color 140ms ease;
+}
+
+.gazette-stats-pvp-back:hover {
+  color: var(--primary);
+}
+
+.gazette-stats-pvp-list-item {
+  position: relative;
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.28rem;
+  padding: 0.85rem 0.2rem;
+  border: 0;
+  background: transparent;
+  text-align: center;
+  transition: color 140ms ease;
+}
+
+.gazette-stats-pvp-list-item::after {
+  content: "";
+  position: absolute;
+  bottom: 0;
+  left: 25%;
+  width: 50%;
+  border-bottom: 1px solid color-mix(in oklch, var(--rule) 28%, transparent);
+}
+
+.gazette-stats-pvp-list li:last-child .gazette-stats-pvp-list-item::after {
+  display: none;
+}
+
+.gazette-stats-pvp-list-item:hover .gazette-stats-pvp-list-name {
+  color: var(--primary);
+}
+
+.gazette-stats-pvp-list-name {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 700;
+  font-style: normal;
+  line-height: 1.2;
+  color: var(--ink);
+}
+
+.gazette-stats-pvp-list-meta {
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
+.gazette-stats-pvp-table-rule {
+  margin-top: 0;
+}
+
+.gazette-stats-pvp-table th,
+.gazette-stats-pvp-table td {
+  font-size: 0.82rem;
+}
+
+.gazette-stats-pvp-table .gazette-stats-pvp-player-col {
+  text-align: left !important;
+}
+
+.gazette-stats-pvp-assists .assists-detail-group-title {
+  font-size: 0.78rem;
+  letter-spacing: 0.14em;
+}
+
+.gazette-stats-pvp-assists .assists-detail-label {
+  font-size: 0.84rem;
+}
+
+.gazette-stats-pvp-assists .assists-detail-state {
+  font-size: 0.72rem;
+}
+
+.assists-detail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.assists-detail-group {
+  width: 100%;
+  max-width: 16.5rem;
+}
+
+.assists-detail-group-title {
+  margin: 0 0 0.35rem;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  text-align: center;
+  color: var(--muted-foreground);
+}
+
+.assists-detail-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.assists-detail-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.22rem 0;
+  border-bottom: 1px solid color-mix(in oklch, var(--rule) 18%, transparent);
+}
+
+.assists-detail-row:last-child {
+  border-bottom: 0;
+}
+
+.assists-detail-label {
+  font-family: var(--font-sans);
+  font-size: 0.72rem;
+  line-height: 1.25;
+  text-align: left;
+  color: var(--foreground);
+}
+
+.assists-detail-state {
+  flex: 0 0 auto;
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: color-mix(in oklch, var(--muted-foreground) 85%, transparent);
+}
+
+.assists-detail-state-on {
+  color: var(--primary);
+}
+
+.gazette-stats-fact {
+  flex: 0 0 auto;
+  margin: 0;
+  max-width: 18rem;
+  margin-inline: auto;
+  font-size: 0.62rem;
+  font-style: italic;
+  font-weight: 400;
+  line-height: 1.4;
+  text-align: center;
+  color: var(--ink);
+  opacity: 0.48;
+  pointer-events: none;
+}
+
+.gazette-stats-reset {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  max-width: 18rem;
+  margin-inline: auto;
+  text-align: center;
+}
+
+.gazette-stats-chrome.gazette-stats-reset {
+  max-width: none;
+  width: 100%;
+}
+
+.gazette-stats-reset-btn {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font-family: var(--font-mono);
+  font-size: 0.92rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--ink);
+  opacity: 0.55;
+  cursor: pointer;
+}
+
+.gazette-stats-reset-btn:hover:not(:disabled) {
+  color: var(--primary);
+  opacity: 0.9;
+}
+
+.gazette-stats-reset-btn:disabled {
+  cursor: wait;
+  opacity: 0.4;
+}
+
+.gazette-stats-reset-error {
+  margin: 0;
+  font-size: 0.62rem;
+}
+
+.gazette-stats-rating {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  padding: 0.55rem 0.15rem 0.35rem;
+}
+
+.gazette-stats-ledger-rating {
+  padding-top: 0;
+  padding-bottom: max(0.35rem, var(--safe-bottom));
+}
+
+.gazette-stats-rating-fill {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 100%;
+}
+
+.gazette-stats-rating-gap {
+  flex: 1 1 0.22rem;
+  min-height: 0.22rem;
+}
+
+.gazette-stats-rating-intro {
+  flex: 0 0 auto;
+  padding: 0.58rem 0;
+}
+
+.gazette-stats-rating-fill > .gazette-stats-rating-intro {
+  flex: 0 0 auto;
+}
+
+.gazette-stats-rating-fill > .gazette-stats-ledger-rule {
+  flex: 0 0 auto;
+  margin: 0;
+}
+
+.gazette-stats-rating-fill > .gazette-stats-ledger-block {
+  flex: 0 0 auto;
+}
+
+.gazette-stats-rating-heading {
+  display: flex;
+  justify-content: center;
+  align-items: baseline;
+  gap: 0.5em;
+  margin: 0;
+  padding: 0 0.35rem;
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  text-align: center;
+  color: var(--ink);
+}
+
+.gazette-stats-rating-heading-core {
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.gazette-stats-rating-heading-slash {
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.gazette-stats-rating-sort {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  color: color-mix(in oklch, var(--muted-foreground) 78%, transparent);
+  cursor: pointer;
+}
+
+.gazette-stats-rating-sort:hover {
+  color: var(--ink);
+}
+
+.gazette-stats-rating-sort-active {
+  font-weight: 700;
+  color: var(--ink);
+}
+
+.gazette-stats-rating-difficulty {
+  display: block;
+  width: 100%;
+  margin: 0 0 0.12rem;
+  padding: 0.2rem 0.35rem 0.05rem;
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-align: center;
+  color: var(--ink);
+}
+
+.gazette-stats-rating-average {
+  margin: 0 0 0.2rem;
+  padding: 0 0.35rem;
+  font-size: 0.78rem;
+  font-weight: 400;
+  line-height: 1.2;
+  text-align: center;
+  color: color-mix(in oklch, var(--muted-foreground) 88%, transparent);
+}
+
+.gazette-stats-rating-expand {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 0.12rem 0.35rem 0.42rem;
+  border: 0;
+  background: transparent;
+  font-size: 0.72rem;
+  font-weight: 400;
+  font-style: italic;
+  line-height: 1.3;
+  text-align: center;
+  color: color-mix(in oklch, var(--muted-foreground) 72%, transparent);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.gazette-stats-rating-expand:active {
+  color: var(--ink);
+}
+
+.gazette-stats-rating-empty {
+  margin: 0;
+  padding: 0.35rem 0 0.15rem;
+  font-size: 0.82rem;
+  text-align: center;
+  color: color-mix(in oklch, var(--muted-foreground) 80%, transparent);
+}
+
+.gazette-stats-rating-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.gazette-stats-rating-row {
+  display: grid;
+  grid-template-columns: 1.4rem minmax(0, 1fr) auto;
+  align-items: baseline;
+  gap: 0.45rem;
+  padding: 0.38rem 0.1rem;
+  border-bottom: 1px solid color-mix(in oklch, var(--rule) 18%, transparent);
+  font-size: 0.9rem;
+  line-height: 1.2;
+}
+
+.gazette-stats-rating-row:last-child {
+  border-bottom: 0;
+}
+
+.gazette-stats-rating-rank {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--muted-foreground);
+}
+
+.gazette-stats-rating-name {
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+  gap: 0.2rem;
+  color: var(--ink);
+}
+
+.gazette-stats-rating-nick {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gazette-stats-rating-time {
+  font-variant-numeric: tabular-nums;
+  color: var(--foreground);
+}
+
+.stats-difficulty-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+  line-height: 1.35;
+}
+
+.stats-difficulty-table th,
+.stats-difficulty-table td {
+  padding: 0.45rem 0.35rem;
+  border-bottom: 1px solid color-mix(in oklch, var(--rule) 18%, transparent);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  vertical-align: baseline;
+}
+
+.stats-difficulty-table thead th {
+  padding-bottom: 0.55rem;
+  border-bottom: 1px solid color-mix(in oklch, var(--rule) 32%, transparent);
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+
+.stats-difficulty-table-metric {
+  text-align: left !important;
+  font-weight: 400;
+  color: var(--muted-foreground);
+}
+
+.stats-difficulty-table tbody th.stats-difficulty-table-metric {
+  font-weight: 400;
+}
+
+.stats-difficulty-table tbody td {
+  color: var(--foreground);
+}
+
+.gazette-stats-find-game {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+  padding: 0.35rem 0.2rem;
+  width: 100%;
+}
+
+.gazette-stats-find-game-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.45rem 0.65rem;
+}
+
+.gazette-stats-find-game-label {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
+.gazette-stats-find-game-input {
+  flex: 0 0 auto;
+  width: 6.5rem;
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-align: center;
+  text-transform: uppercase;
+  color: var(--foreground);
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid color-mix(in oklch, var(--rule) 55%, transparent);
+  padding: 0.15rem 0.1rem;
+  outline: none;
+}
+
+.gazette-stats-find-game-input:focus {
+  border-bottom-color: var(--primary);
+}
+
+.gazette-stats-find-game-submit {
+  flex: 0 0 auto;
+  padding: 0.15rem 0.2rem;
+  border: 0;
+  background: transparent;
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--primary);
+  transition: color 140ms ease;
+}
+
+.gazette-stats-find-game-submit:disabled {
+  color: var(--muted-foreground);
+}
+
+.gazette-stats-find-game-error {
+  margin: 0.45rem 0 0;
+  font-size: 0.78rem;
+  text-align: center;
+  color: var(--destructive);
+}
+
+.gazette-stats-games-filters {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 1.4rem;
+  padding: 0.35rem 0.75rem 0.15rem;
+}
+
+.gazette-stats-games-filter {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.08rem;
+  min-width: 0;
+}
+
+.gazette-stats-games-filter-label {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: color-mix(in oklch, var(--muted-foreground) 80%, transparent);
+}
+
+.gazette-stats-games-filter-select {
+  min-width: 7.4rem;
+  max-width: 42vw;
+  margin: 0;
+  padding: 0.12rem 0.1rem;
+  border: 0;
+  border-bottom: 1px solid color-mix(in oklch, var(--rule) 55%, transparent);
+  background: transparent;
+  font-family: var(--font-mono);
+  font-size: 0.82rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-align: center;
+  text-align-last: center;
+  color: var(--ink);
+  cursor: pointer;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.gazette-stats-games-filter-select:focus {
+  border-bottom-color: var(--primary);
+}
+
+.gazette-stats-games-ledger {
+  overflow: hidden;
+  padding-bottom: 0.35rem;
+}
+
+.gazette-stats-games-ledger > .gazette-stats-ledger-body {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.gazette-stats-games-block {
+  display: flex;
+  min-height: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+}
+
+.gazette-stats-games-list {
+  display: flex;
+  min-height: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.gazette-stats-games-list > li {
+  position: relative;
+  display: flex;
+  min-height: 0;
+  flex: 1 1 0;
+  align-items: center;
+}
+
+.gazette-stats-games-list > li:not(:last-child)::after {
+  content: "";
+  position: absolute;
+  right: 25%;
+  bottom: 0;
+  left: 25%;
+  border-bottom: 1px solid color-mix(in oklch, var(--rule) 28%, transparent);
+}
+
+.gazette-stats-games-item {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0.15rem 0.2rem;
+  border: 0;
+  background: transparent;
+  text-align: center;
+}
+
+.gazette-stats-games-item:hover .gazette-stats-games-line {
+  color: var(--primary);
+}
+
+.gazette-stats-games-line {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  column-gap: 0.35rem;
+  font-family: var(--font-display);
+  font-size: 0.92rem;
+  font-weight: 400;
+  font-style: normal;
+  line-height: 1.25;
+  color: var(--ink);
+}
+
+.gazette-stats-games-dot {
+  color: color-mix(in oklch, var(--muted-foreground) 55%, transparent);
+}
+
+.gazette-stats-games-status {
+  display: inline-flex;
+  width: 1em;
+  height: 1em;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink);
+}
+
+.gazette-stats-games-status svg {
+  display: block;
+  width: 0.95em;
+  height: 0.95em;
+}
+
+.gazette-stats-games-pager {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  padding: 0.25rem 0 0.15rem;
+}
+
+.gazette-stats-games-pager-btn {
+  min-width: 1.85rem;
+  margin: 0;
+  padding: 0.15rem 0.25rem;
+  border: 0;
+  background: transparent;
+  font-family: var(--font-display);
+  font-size: 1.45rem;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--ink);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.gazette-stats-games-pager-btn:disabled {
+  color: color-mix(in oklch, var(--muted-foreground) 45%, transparent);
+  cursor: default;
+}
+
+.gazette-stats-games-pager-status {
+  min-width: 3.8rem;
+  font-family: var(--font-mono);
+  font-size: 1.05rem;
+  letter-spacing: 0.04em;
+  text-align: center;
+  color: var(--muted-foreground);
+}
+
+.gazette-stats-find-game-footer {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: calc(4.6rem + var(--safe-bottom));
+  padding: 0 0.75rem max(0.55rem, var(--safe-bottom));
+  background: transparent;
+  transform: translateY(calc(var(--keyboard-inset) * -1));
+}
+
+.gazette-stats-find-game-footer-rule {
+  flex: 0 0 auto;
+  width: min(100%, 22rem);
+  height: 3px;
+  margin: 0.45rem auto 0;
+  border-top: 1px solid color-mix(in oklch, var(--rule) 45%, transparent);
+  border-bottom: 1px solid color-mix(in oklch, var(--rule) 45%, transparent);
+}
+
+.gazette-review-party-link {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 0.14em;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.gazette-review-party-link:hover {
+  color: var(--destructive);
+}
+
+.gazette-stats-party-detail {
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 0.35rem 1.15rem max(0.75rem, var(--safe-bottom));
+}
+
+.gazette-stats-party-detail-body {
+  --party-detail-gap: clamp(0.45rem, 2.2vh, 1.15rem);
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  flex-direction: column;
+  justify-content: space-evenly;
+  gap: var(--party-detail-gap);
+}
+
+.gazette-stats-party-detail-body > .gazette-stats-pvp-difficulty,
+.gazette-stats-party-detail-body > .gazette-stats-pvp-assists,
+.gazette-stats-party-detail-body > .gazette-stats-ledger-rule,
+.gazette-stats-party-detail-body > .gazette-stats-pvp-table,
+.gazette-stats-party-detail-body > .gazette-stats-pvp-review-hint {
+  flex: 0 0 auto;
+}
+
+.gazette-stats-pvp-player-link {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  font-weight: 700;
+  color: var(--primary);
+  text-align: left;
+  transition: color 140ms ease;
+}
+
+.gazette-stats-pvp-player-link:hover:not(:disabled) {
+  color: var(--ink);
+}
+
+.gazette-stats-pvp-player-link:disabled {
+  opacity: 0.55;
+}
+
+.gazette-stats-pvp-review-hint {
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  text-align: center;
+  color: var(--muted-foreground);
+}
+
+.gazette-stats-pvp-review-action {
+  margin-top: 1rem;
+  text-align: center;
+}
+
+.gazette-stats-pvp-review-btn {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--primary);
+  transition: color 140ms ease;
+}
+
+.gazette-stats-pvp-review-btn:disabled {
+  color: var(--muted-foreground);
+}
+
+.gazette-stats-pvp-review-btn:hover:not(:disabled) {
+  color: var(--foreground);
+}
+
+.gazette-review {
+  --review-section-gap: clamp(0.4rem, 2.2vh, 1.15rem);
+  display: flex;
+  min-height: 0;
+  flex: 1;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.gazette-review-masthead {
+  flex-shrink: 0;
+}
+
+.gazette-review-masthead-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 1.7rem;
+}
+
+.gazette-review-title {
+  position: absolute;
+  left: 0.45rem;
+  top: 50%;
+  transform: translateY(-50%);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font-size: 1.45rem;
+  font-style: normal;
+  line-height: 1;
+  white-space: nowrap;
+  color: var(--ink);
+}
+
+.gazette-review-back {
+  position: absolute;
+  right: 0.45rem;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  line-height: 1;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+  transition: color 140ms ease;
+}
+
+.gazette-review-back:hover {
+  color: var(--primary);
+}
+
+.gazette-review-body {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--review-section-gap);
+  overflow: hidden;
+  padding: var(--review-section-gap) 0.85rem 0;
+}
+
+.gazette-review-footer {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--review-section-gap);
+  padding: clamp(0.65rem, 2.2vh, 1.15rem) 0.85rem max(1.75rem, calc(var(--safe-bottom) + 1.25rem));
+}
+
+.gazette-review-meta {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.12rem;
+  padding: 0;
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.04em;
+  color: var(--muted-foreground);
+}
+
+.gazette-review-meta-by {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.15rem 0;
+  padding: 0;
+  font-family: var(--font-mono);
+  font-size: 0.88rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--muted-foreground);
+}
+
+.gazette-review-meta-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 0.15rem 0;
+}
+
+.gazette-review-meta-sep {
+  margin: 0 0.28rem;
+  color: color-mix(in oklch, var(--rule) 50%, transparent);
+}
+
+.gazette-review-copy {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--review-section-gap);
+  padding: 0;
+}
+
+.gazette-review-export-line {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  line-height: 1.35;
+  text-transform: uppercase;
+  text-align: center;
+  color: var(--muted-foreground);
+}
+
+.gazette-review-export-link {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 0.16em;
+}
+
+.gazette-review-export-link:hover:not(:disabled) {
+  color: var(--primary);
+}
+
+.gazette-review-export-link:disabled {
+  color: var(--muted-foreground);
+}
+
+.gazette-review-replay-note {
+  flex-shrink: 0;
+  margin: 0;
+  padding: 0;
+  min-height: 1.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.72rem;
+  text-align: center;
+  color: var(--muted-foreground);
+}
+
+.gazette-review-board {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 0;
+  container-type: size;
+  --primary: var(--play-accent);
+  --ring: var(--play-accent);
+}
+
+.gazette-review-controls {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 0;
+  padding: 0;
+  min-height: 2rem;
+}
+
+.gazette-review-board + .gazette-review-replay-note {
+  margin-top: 0;
+}
+
+.gazette-review-controls-disabled {
+  opacity: 0.45;
+}
+
+.gazette-review-control-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  padding: 0;
+  border: 1px solid color-mix(in oklch, var(--rule) 40%, transparent);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--foreground);
+  transition:
+    color 140ms ease,
+    border-color 140ms ease;
+}
+
+.gazette-review-control-btn:disabled {
+  color: var(--muted-foreground);
+  border-color: color-mix(in oklch, var(--rule) 25%, transparent);
+}
+
+.gazette-review-control-btn-play {
+  width: 2.25rem;
+  height: 2.25rem;
+}
+
+.gazette-review-cursor {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--muted-foreground);
+  text-align: center;
+}
+
+.gazette-review-actions {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0;
+}
+
+.gazette-review-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+  transition: color 140ms ease;
+}
+
+.gazette-review-action-btn:hover:not(:disabled) {
+  color: var(--primary);
+}
+
+.gazette-review-action-btn-primary {
+  color: var(--primary);
+  font-size: 1.05rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+
+.gazette-review-action-btn:disabled {
+  color: var(--muted-foreground);
+}
+
+.gazette-review-action-error {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--destructive);
+}
+
+.gazette-review-action-notice {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--primary);
+}
+
+@media (min-width: 640px) {
+  .gazette-stats-masthead-title,
+  .gazette-guide-title,
+  .gazette-review-title,
+  .gazette-play-analysis-title {
+    font-size: 1.6rem;
+  }
+
+  .gazette-stats-mode-tab {
+    font-size: 1.45rem;
+  }
+}

@@ -1,0 +1,827 @@
+.gazette-guide-masthead-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 1.7rem;
+}
+
+.gazette-guide-title {
+  position: absolute;
+  left: 0.45rem;
+  top: 50%;
+  transform: translateY(-50%);
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font-size: 1.45rem;
+  font-style: normal;
+  line-height: 1;
+  white-space: nowrap;
+  color: var(--ink);
+}
+
+.gazette-guide-title-back {
+  position: absolute;
+  left: 0.45rem;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  line-height: 1;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--muted-foreground);
+  transition: color 140ms ease;
+}
+
+.gazette-guide-title-back:hover {
+  color: var(--primary);
+}
+
+.gazette-guide-langs {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+}
+
+.gazette-guide-lang-tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.1rem;
+  border: 0;
+  background: transparent;
+  line-height: 0;
+  opacity: 0.45;
+  transition: opacity 140ms ease;
+}
+
+.gazette-guide-lang-tab:hover {
+  opacity: 0.8;
+}
+
+.gazette-guide-lang-tab-active {
+  opacity: 1;
+}
+
+.gazette-guide-lang-tab-active .gazette-guide-flag {
+  width: 1.485rem;
+  height: 0.99rem;
+}
+
+.gazette-guide-flag {
+  display: block;
+  width: 1.35rem;
+  height: 0.9rem;
+  flex: 0 0 auto;
+  border: 1px solid color-mix(in oklch, var(--rule) 35%, transparent);
+  box-sizing: content-box;
+}
+
+.gazette-guide-go-home {
+  position: absolute;
+  right: 0.45rem;
+  top: 50%;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  line-height: 1;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--muted-foreground);
+  transition: color 140ms ease;
+}
+
+.gazette-guide-go-home:hover {
+  color: var(--primary);
+}
+
+.gazette-guide-ledger {
+  padding-top: 0.25rem;
+}
+
+.gazette-guide-ledger:not(.gazette-guide-ledger-toc) {
+  overflow: hidden;
+  padding-top: 0;
+}
+
+.gazette-guide-ledger:not(.gazette-guide-ledger-toc) .gazette-guide-pane {
+  height: 100%;
+  min-height: 0;
+}
+
+.gazette-guide-ledger-toc {
+  overflow: hidden;
+  padding-left: 0.55rem;
+  padding-right: 0.55rem;
+  padding-bottom: max(0.35rem, var(--safe-bottom));
+}
+
+.gazette-guide-pane {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  animation: gazette-guide-pane-in 220ms ease-out;
+}
+
+.gazette-guide-ledger-toc .gazette-guide-pane {
+  height: 100%;
+}
+
+@keyframes gazette-guide-pane-in {
+  from {
+    opacity: 0;
+    transform: translateY(0.35rem);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gazette-guide-pane {
+    animation: none;
+  }
+
+  .guide-preview-cell-flash {
+    animation: none;
+    background: color-mix(in oklch, var(--background) 88%, var(--muted));
+  }
+}
+
+.gazette-guide-toc {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+}
+
+.gazette-guide-toc-intro {
+  flex: 0 0 auto;
+  margin: 0.2rem 0 0.35rem;
+  padding: 0 0.5rem;
+  font-size: 0.88rem;
+  line-height: 1.35;
+  text-align: center;
+  color: color-mix(in oklch, var(--muted-foreground) 92%, transparent);
+}
+
+.gazette-guide-toc > .gazette-stats-ledger-rule {
+  flex: 0 0 auto;
+  margin: 0.15rem 0;
+}
+
+.gazette-guide-toc-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: space-evenly;
+  justify-content: safe space-evenly;
+  gap: 0.35rem;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+}
+
+.gazette-guide-toc-entry {
+  display: flex;
+  flex: 1 0 auto;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+}
+
+.gazette-guide-toc-rule-row {
+  display: flex;
+  flex: 0 0 auto;
+  justify-content: center;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+}
+
+.gazette-guide-toc-rule-sizer {
+  display: grid;
+  justify-items: stretch;
+  align-items: center;
+  width: max-content;
+  max-width: 85%;
+}
+
+.gazette-guide-toc-rule-sizer > * {
+  grid-area: 1 / 1;
+}
+
+.gazette-guide-toc-rule-anchor {
+  visibility: hidden;
+  height: 0;
+  overflow: hidden;
+  font-family: var(--font-display);
+  font-size: 1.28rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.gazette-guide-toc-rule {
+  width: 100%;
+  height: 0;
+  margin: 0;
+  border: 0;
+  border-top: 1px dashed color-mix(in oklch, var(--rule) 60%, transparent);
+}
+
+.gazette-guide-toc-item {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.32rem;
+  padding: 0.2rem 0.35rem;
+  border: 0;
+  background: transparent;
+  text-align: center;
+}
+
+.gazette-guide-toc-item:hover .gazette-guide-toc-title {
+  color: var(--primary);
+}
+
+.gazette-guide-toc-title {
+  font-family: var(--font-display);
+  font-size: 1.28rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  color: var(--ink);
+}
+
+.gazette-guide-toc-lead {
+  width: 100%;
+  max-width: 22rem;
+  padding: 0;
+  font-size: 0.76rem;
+  line-height: 1.35;
+  white-space: normal;
+  color: color-mix(in oklch, var(--muted-foreground) 90%, transparent);
+}
+
+.gazette-guide-rubric {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  padding-bottom: 0;
+}
+
+.gazette-guide-rubric-header {
+  flex: 0 0 auto;
+  padding: 0.55rem 0 0;
+}
+
+.gazette-guide-rubric-scroll {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  padding-bottom: max(0.35rem, var(--safe-bottom));
+}
+
+.gazette-guide-rubric-title {
+  margin: 0 0 0.55rem;
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  text-align: center;
+  color: var(--ink);
+}
+
+.gazette-guide-rubric-header .gazette-stats-ledger-rule {
+  margin: 0;
+}
+
+.gazette-guide-rubric-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding-top: 0.9rem;
+}
+
+.gazette-guide-rubric-fill {
+  --guide-section-gap: 0.7rem;
+  flex: 1 0 auto;
+  justify-content: space-evenly;
+  justify-content: safe space-evenly;
+  min-height: 100%;
+  gap: var(--guide-section-gap);
+  padding-top: var(--guide-section-gap);
+}
+
+.gazette-guide-rubric-fill > * {
+  flex-shrink: 0;
+}
+
+.gazette-guide-paragraph {
+  margin: 0;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  text-align: center;
+  color: var(--foreground);
+}
+
+.gazette-guide-paragraph-center {
+  text-align: center;
+}
+
+.gazette-guide-technique-name-link {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  color: var(--primary);
+  text-decoration: underline;
+  text-underline-offset: 0.12em;
+  cursor: pointer;
+}
+
+.gazette-guide-technique-name-link:hover {
+  color: var(--ink);
+}
+
+.gazette-guide-difficulty-link {
+  margin: 0.35rem 0 0.15rem;
+  padding: 0.35rem 0 0;
+  border: 0;
+  background: transparent;
+  font-family: inherit;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  text-align: center;
+  color: var(--primary);
+}
+
+.gazette-guide-difficulty-link:hover {
+  color: var(--ink);
+}
+
+.gazette-guide-levels {
+  display: flex;
+  flex: 1 0 auto;
+  flex-direction: column;
+  justify-content: space-evenly;
+  justify-content: safe space-evenly;
+  gap: 0.85rem;
+  min-height: 0;
+}
+
+.gazette-guide-level {
+  --guide-level-heading-gap: 0.5rem;
+  padding: var(--guide-level-heading-gap) 0.35rem 0;
+  border-top: 1px dotted color-mix(in oklch, var(--rule) 28%, transparent);
+}
+
+.gazette-guide-level:first-child {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.gazette-guide-level-name {
+  margin: 0 0 var(--guide-level-heading-gap);
+  font-family: var(--font-mono);
+  font-size: 1.01rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  text-align: center;
+  color: var(--ink);
+}
+
+.gazette-guide-level-tech {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.4;
+  text-align: center;
+  color: var(--ink);
+}
+
+.gazette-guide-friends {
+  gap: var(--guide-section-gap);
+}
+
+.gazette-guide-friends-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.gazette-guide-friends-heading {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 1.01rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-align: center;
+  color: var(--ink);
+}
+
+.gazette-guide-rubric-body.gazette-guide-technique-index {
+  --technique-index-inset: clamp(0.7rem, 2.8dvh, 1.5rem);
+  flex: 1 1 auto;
+  min-height: 100%;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  justify-content: space-evenly;
+  justify-content: safe space-evenly;
+  padding-top: 0;
+  padding-bottom: var(--safe-bottom);
+  gap: 0;
+}
+
+.gazette-guide-technique-index-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--technique-index-inset);
+}
+
+.gazette-guide-technique-index-btn {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 0.4rem;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font-family: inherit;
+  font-size: 1.02rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  line-height: 1.25;
+  text-align: center;
+  color: var(--ink);
+}
+
+.gazette-guide-technique-index-btn:hover {
+  color: var(--primary);
+}
+
+.gazette-guide-technique-index-name {
+  display: block;
+}
+
+.gazette-guide-technique-index-progress {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.22rem;
+  font-size: inherit;
+  font-weight: inherit;
+  letter-spacing: inherit;
+  line-height: inherit;
+  color: inherit;
+}
+
+.gazette-guide-technique-index-check {
+  width: 1em;
+  height: 1em;
+  flex: none;
+}
+
+.gazette-guide-technique-page {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.gazette-guide-technique-article {
+  gap: 1rem;
+}
+
+.gazette-guide-technique-article-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+  padding-bottom: 0.85rem;
+}
+
+.gazette-guide-lesson-board {
+  width: 100%;
+  padding: 0 0.2rem;
+  container-type: inline-size;
+}
+
+.gazette-guide-lesson-board .sudoku-grid-frame {
+  width: min(100cqi, 46dvh);
+  max-width: 100%;
+  pointer-events: none;
+}
+
+.gazette-guide-technique-error {
+  text-align: center;
+  color: var(--destructive);
+}
+
+.gazette-guide-practice {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.15rem 0 0.4rem;
+}
+
+.gazette-guide-practice-dock {
+  flex: 0 0 auto;
+  align-self: stretch;
+  width: 100%;
+  padding: 0.65rem 0.75rem calc(0.65rem + var(--safe-bottom));
+  border-top: 1px solid color-mix(in oklch, var(--rule) 40%, transparent);
+  background: transparent;
+}
+
+.gazette-guide-assists {
+  gap: var(--guide-section-gap);
+}
+
+.gazette-guide-assist-names {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.gazette-guide-assist-name-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.3rem 0.85rem;
+}
+
+.gazette-guide-assist-name {
+  padding: 0.25rem 0;
+  border: 0;
+  border-bottom: 1px solid transparent;
+  background: transparent;
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  line-height: 1.25;
+  color: color-mix(in oklch, var(--muted-foreground) 75%, transparent);
+}
+
+.gazette-guide-assist-name-active {
+  border-bottom-color: color-mix(in oklch, var(--primary) 55%, transparent);
+  color: var(--primary);
+}
+
+.gazette-guide-assist-detail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.35rem 0.15rem 0.15rem;
+}
+
+.gazette-guide-assist-detail > :first-child {
+  margin-bottom: 0.3rem;
+}
+
+.gazette-guide-assist-detail-label {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+  line-height: 1.25;
+  text-align: center;
+  color: var(--ink);
+}
+
+.guide-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 2.05rem);
+  grid-template-rows: repeat(3, 2.05rem);
+  gap: 1px;
+  padding: 0.28rem;
+  border: 1px solid color-mix(in oklch, var(--rule) 45%, transparent);
+  background: color-mix(in oklch, var(--rule) 18%, transparent);
+}
+
+.guide-preview-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in oklch, var(--background) 88%, var(--muted));
+}
+
+.guide-preview-cell-digit {
+  font-family: var(--font-mono);
+  font-size: 1.05rem;
+  font-weight: 600;
+  line-height: 1;
+  color: var(--ink);
+}
+
+.guide-preview-cell-digit-wrong {
+  color: var(--destructive);
+}
+
+.guide-preview-cell-notes {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  place-items: center;
+  padding: 0.05rem;
+}
+
+.guide-preview-cell-note {
+  font-family: var(--font-mono);
+  font-size: 0.62rem;
+  line-height: 1;
+  color: color-mix(in oklch, var(--play-accent) 70%, var(--muted-foreground));
+}
+
+.guide-preview-cell-note-gone {
+  color: color-mix(in oklch, var(--destructive) 70%, transparent);
+}
+
+.guide-preview-cell-selected {
+  background: color-mix(in oklch, var(--play-accent) 28%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--play-accent) 45%, transparent);
+}
+
+.guide-preview-cell-peer {
+  background: color-mix(in oklch, var(--ink) 8%, transparent);
+}
+
+.guide-preview-cell-same {
+  background: color-mix(in oklch, var(--play-accent) 15%, transparent);
+}
+
+.guide-preview-cell-same-note {
+  background: color-mix(in oklch, var(--play-accent) 9%, transparent);
+}
+
+.guide-preview-cell-wrong {
+  background: color-mix(in oklch, var(--destructive) 28%, transparent);
+}
+
+.guide-preview-cell-flash {
+  animation: guide-preview-flash 1.7s ease-in-out infinite;
+}
+
+@keyframes guide-preview-flash {
+  0%,
+  55%,
+  100% {
+    background: color-mix(in oklch, var(--background) 88%, var(--muted));
+  }
+
+  12%,
+  28% {
+    background: color-mix(in oklch, var(--play-accent) 24%, transparent);
+  }
+}
+
+.guide-preview-pad {
+  display: flex;
+  gap: 0.28rem;
+  padding: 0.35rem 0.45rem;
+  border: 1px solid color-mix(in oklch, var(--rule) 40%, transparent);
+}
+
+.guide-preview-pad-key {
+  display: inline-flex;
+  width: 2.05rem;
+  height: 2.05rem;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-mono);
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.guide-preview-pad-key-dim {
+  opacity: 0.28;
+  pointer-events: none;
+}
+
+.guide-preview-pad-key-sticky {
+  color: var(--play-accent);
+  box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--play-accent) 55%, transparent);
+}
+
+.guide-preview-notes {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.guide-preview-notes-cell {
+  position: relative;
+  display: block;
+  width: 3.7rem;
+  height: 3.7rem;
+  padding: 0.16rem;
+  border: 1px solid color-mix(in oklch, var(--rule) 40%, transparent);
+  box-sizing: border-box;
+  overflow: visible;
+}
+
+.guide-preview-notes-pencil {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  z-index: 2;
+  display: flex;
+  width: 1.15rem;
+  height: 1.15rem;
+  align-items: center;
+  justify-content: center;
+  color: var(--play-accent);
+  transform: translate(52%, -62%) rotate(-28deg);
+  filter: drop-shadow(0 0 1px color-mix(in oklch, var(--background) 90%, white));
+  pointer-events: none;
+}
+
+.guide-preview-notes-pencil svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.guide-preview-notes-arrow {
+  font-family: var(--font-display);
+  font-size: 1.35rem;
+  color: color-mix(in oklch, var(--rule) 75%, transparent);
+}
+
+.gazette-guide-faq {
+  list-style: none;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.gazette-guide-faq-item {
+  border-bottom: 1px dotted color-mix(in oklch, var(--rule) 28%, transparent);
+  padding-bottom: 0.45rem;
+}
+
+.gazette-guide-faq-q {
+  margin: 0;
+  padding: 0.15rem 0 0.2rem;
+  font-family: var(--font-display);
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
+  line-height: 1.25;
+  text-align: center;
+  color: var(--ink);
+}
+
+.gazette-guide-faq-a {
+  padding: 0.15rem 0 0.25rem;
+}
