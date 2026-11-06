@@ -54,27 +54,7 @@ How a request moves is in [ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## Tests and CI
 
-Backend, from `backend/`. `pytest` reads `DATABASE_URL` from the shell. The database name must end in `_test`.
-
-```bash
-uv run ruff check .
-uv run ruff format --check .
-uv run mypy app
-uv run python scripts/export_openapi.py --check
-uv run pytest
-```
-
-Frontend, from `frontend/`:
-
-```bash
-npm run gen:api && git diff --exit-code src/api/schema.d.ts
-npm run lint
-npm run typecheck
-npm test
-npm run build
-```
-
-CI runs those checks. It also runs `alembic upgrade head` before `pytest`, and builds the backend and frontend Docker images.
+CI runs lint, types, and tests for the backend and the frontend. It applies the database migrations before the backend tests and builds both Docker images. The commands are in [`.github/workflows/ci.yml`](.github/workflows/ci.yml).
 
 [![CI](https://github.com/MurikBY/sudoku/actions/workflows/ci.yml/badge.svg)](https://github.com/MurikBY/sudoku/actions/workflows/ci.yml)
 
