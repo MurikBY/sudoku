@@ -39,18 +39,7 @@ from app.services.party_notify import build_completion_message
 from app.services.sudoku.carver import givens_count
 from app.services.sudoku.puzzle import GeneratedPuzzle
 from app.services.user_upsert import upsert_telegram_user
-from tests.fixtures import KNOWN_PUZZLE, KNOWN_SOLUTION
-
-ASSISTS = {
-    "pencil": True,
-    "highlight_peers": False,
-    "highlight_same_digit": True,
-    "mistake_feedback": True,
-    "dim_completed_digits": False,
-    "unit_complete_animation": False,
-    "auto_clear_notes": True,
-    "sticky_digit": True,
-}
+from tests.fixtures import KNOWN_PUZZLE, KNOWN_SOLUTION, PARTY_ASSISTS
 
 
 @pytest.fixture
@@ -90,7 +79,7 @@ async def test_party_create_join_start_same_puzzle(
 
     create = await async_client.post(
         "/api/parties",
-        json={"difficulty": "easy", "assists": ASSISTS},
+        json={"difficulty": "easy", "assists": PARTY_ASSISTS},
         headers=host,
     )
     assert create.status_code == 201
@@ -142,7 +131,7 @@ async def test_party_start_uses_start_difficulty_not_create(
 
     create = await async_client.post(
         "/api/parties",
-        json={"difficulty": "easy", "assists": ASSISTS},
+        json={"difficulty": "easy", "assists": PARTY_ASSISTS},
         headers=host,
     )
     assert create.status_code == 201
@@ -183,7 +172,7 @@ async def test_party_host_updates_waiting_difficulty(
 
     create = await async_client.post(
         "/api/parties",
-        json={"difficulty": "easy", "assists": ASSISTS},
+        json={"difficulty": "easy", "assists": PARTY_ASSISTS},
         headers=host,
     )
     assert create.status_code == 201
@@ -227,7 +216,7 @@ async def test_party_progress_lists_filled_cells(
 
     create = await async_client.post(
         "/api/parties",
-        json={"difficulty": "easy", "assists": ASSISTS},
+        json={"difficulty": "easy", "assists": PARTY_ASSISTS},
         headers=host,
     )
     party_id = create.json()["id"]
@@ -291,7 +280,7 @@ async def test_party_join_rejected_after_start(
 
     create = await async_client.post(
         "/api/parties",
-        json={"difficulty": "medium", "assists": ASSISTS},
+        json={"difficulty": "medium", "assists": PARTY_ASSISTS},
         headers=host,
     )
     party_id = create.json()["id"]
@@ -332,7 +321,7 @@ async def test_party_start_abandons_solo_only_then(
 
     create = await async_client.post(
         "/api/parties",
-        json={"difficulty": "easy", "assists": ASSISTS},
+        json={"difficulty": "easy", "assists": PARTY_ASSISTS},
         headers=host,
     )
     assert create.status_code == 201
@@ -380,7 +369,7 @@ async def test_resumable_party_game_includes_host_assists(
 
     create = await async_client.post(
         "/api/parties",
-        json={"difficulty": "easy", "assists": ASSISTS},
+        json={"difficulty": "easy", "assists": PARTY_ASSISTS},
         headers=host,
     )
     assert create.status_code == 201
@@ -402,13 +391,13 @@ async def test_resumable_party_game_includes_host_assists(
 
     host_resumable = await async_client.get("/api/games/resumable", headers=host)
     assert host_resumable.status_code == 200
-    assert host_resumable.json()["assists"] == ASSISTS
+    assert host_resumable.json()["assists"] == PARTY_ASSISTS
     assert host_resumable.json()["party_id"] == create.json()["id"]
     assert host_resumable.json()["id"] == started.json()["game_id"]
 
     guest_resumable = await async_client.get("/api/games/resumable", headers=guest)
     assert guest_resumable.status_code == 200
-    assert guest_resumable.json()["assists"] == ASSISTS
+    assert guest_resumable.json()["assists"] == PARTY_ASSISTS
     assert guest_resumable.json()["party_id"] == create.json()["id"]
     assert guest_resumable.json()["id"] is not None
     assert guest_resumable.json()["id"] != started.json()["game_id"]
@@ -424,7 +413,7 @@ async def test_party_cancel_and_leave(
 
     create = await async_client.post(
         "/api/parties",
-        json={"difficulty": "easy", "assists": ASSISTS},
+        json={"difficulty": "easy", "assists": PARTY_ASSISTS},
         headers=host,
     )
     party_id = create.json()["id"]
@@ -462,7 +451,7 @@ async def test_party_ws_rejects_non_member(
 
     create = await async_client.post(
         "/api/parties",
-        json={"difficulty": "easy", "assists": ASSISTS},
+        json={"difficulty": "easy", "assists": PARTY_ASSISTS},
         headers=host,
     )
     party_id = uuid.UUID(create.json()["id"])
@@ -510,7 +499,7 @@ async def test_party_history_and_results(
 
     create = await async_client.post(
         "/api/parties",
-        json={"difficulty": "easy", "assists": ASSISTS},
+        json={"difficulty": "easy", "assists": PARTY_ASSISTS},
         headers=host,
     )
     party = create.json()
@@ -589,7 +578,7 @@ class _NotifyBot:
 async def _started_party_game_id(async_client: AsyncClient, host: dict, guest: dict) -> str:
     create = await async_client.post(
         "/api/parties",
-        json={"difficulty": "easy", "assists": ASSISTS},
+        json={"difficulty": "easy", "assists": PARTY_ASSISTS},
         headers=host,
     )
     party = create.json()
@@ -677,7 +666,7 @@ async def test_party_join_rejected_when_full(async_client: AsyncClient, party_he
     host = party_headers(801, "host_full")
     create = await async_client.post(
         "/api/parties",
-        json={"difficulty": "easy", "assists": ASSISTS},
+        json={"difficulty": "easy", "assists": PARTY_ASSISTS},
         headers=host,
     )
     assert create.status_code == 201
@@ -733,7 +722,7 @@ async def test_concurrent_join_during_start_does_not_leave_a_member_without_a_ga
             session,
             host,
             Difficulty.easy,
-            GameAssistsPayload.model_validate(ASSISTS),
+            GameAssistsPayload.model_validate(PARTY_ASSISTS),
         )
         party_id = created.id
         code = created.code
@@ -831,7 +820,7 @@ async def test_leave_during_start_keeps_the_member_and_their_game(
             session,
             host,
             Difficulty.easy,
-            GameAssistsPayload.model_validate(ASSISTS),
+            GameAssistsPayload.model_validate(PARTY_ASSISTS),
         )
         await join_party(session, guest, created.code)
         party_id = created.id
@@ -869,7 +858,7 @@ async def test_cancel_during_start_leaves_the_party_started(
             session,
             host,
             Difficulty.easy,
-            GameAssistsPayload.model_validate(ASSISTS),
+            GameAssistsPayload.model_validate(PARTY_ASSISTS),
         )
         party_id = created.id
 
@@ -902,7 +891,7 @@ async def test_difficulty_change_during_start_keeps_the_started_difficulty(
             session,
             host,
             Difficulty.easy,
-            GameAssistsPayload.model_validate(ASSISTS),
+            GameAssistsPayload.model_validate(PARTY_ASSISTS),
         )
         party_id = created.id
 
@@ -932,7 +921,7 @@ def _member(party, user_id: int):
 
 
 def _assists() -> GameAssistsPayload:
-    return GameAssistsPayload.model_validate(ASSISTS)
+    return GameAssistsPayload.model_validate(PARTY_ASSISTS)
 
 
 @pytest.mark.asyncio
@@ -1081,7 +1070,7 @@ def test_party_ws_event_json_matches_the_dict_events() -> None:
         code="ABCDEF",
         host_user_id=11,
         difficulty=Difficulty.medium,
-        assists=dict(ASSISTS),
+        assists=dict(PARTY_ASSISTS),
         status=PartyStatus.waiting,
         created_at=datetime(2026, 11, 4, 9, 0, tzinfo=UTC),
     )

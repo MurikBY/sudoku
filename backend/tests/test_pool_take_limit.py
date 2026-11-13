@@ -2,17 +2,7 @@ import pytest
 from httpx import AsyncClient, Response
 
 from app.services.pool_take_limit import PoolTakeLimit
-
-ASSISTS = {
-    "pencil": True,
-    "highlight_peers": False,
-    "highlight_same_digit": True,
-    "mistake_feedback": True,
-    "dim_completed_digits": False,
-    "unit_complete_animation": False,
-    "auto_clear_notes": True,
-    "sticky_digit": True,
-}
+from tests.fixtures import PARTY_ASSISTS
 
 _RATE_LIMITED = {
     "code": "pool_take_rate_limited",
@@ -103,7 +93,7 @@ async def test_party_start_counts_against_the_host(
 
     created = await async_client.post(
         "/api/parties",
-        json={"difficulty": "easy", "assists": ASSISTS},
+        json={"difficulty": "easy", "assists": PARTY_ASSISTS},
         headers=host,
     )
     assert created.status_code == 201

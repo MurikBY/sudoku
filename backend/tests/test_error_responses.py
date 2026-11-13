@@ -5,18 +5,7 @@ from httpx import AsyncClient
 
 from app.main import app
 from app.services.play_lock_service import PlayLockedError
-from tests.fixtures import KNOWN_PUZZLE
-
-ASSISTS = {
-    "pencil": True,
-    "highlight_peers": False,
-    "highlight_same_digit": True,
-    "mistake_feedback": True,
-    "dim_completed_digits": False,
-    "unit_complete_animation": False,
-    "auto_clear_notes": True,
-    "sticky_digit": True,
-}
+from tests.fixtures import KNOWN_PUZZLE, PARTY_ASSISTS
 
 
 async def _create_easy_game(async_client: AsyncClient, headers: dict[str, str]) -> dict:
@@ -247,7 +236,7 @@ async def test_waiting_party_results_are_not_available(
 ) -> None:
     created = await async_client.post(
         "/api/parties",
-        json={"difficulty": "easy", "assists": ASSISTS},
+        json={"difficulty": "easy", "assists": PARTY_ASSISTS},
         headers=auth_headers,
     )
     assert created.status_code == 201
