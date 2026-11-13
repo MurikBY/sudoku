@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+
 const COL_A = [
   "City council delayed the quay vote until Thursday after a late amendment on ferry fares. Merchants along the embankment asked for clearer weekend market rules after dusk.",
   "Rain returned overnight and left the tram lines slick from the depot to the north square. Morning service ran three minutes behind on the river loop.",
@@ -34,6 +36,60 @@ const COL_F = [
   "The autumn editions will keep the puzzle on page twelve. Corrections, as ever, in the margin only.",
 ];
 
+const MARKET_PRICES = [
+  { name: "Wheat", price: "12¼" },
+  { name: "Coal", price: "8¾" },
+  { name: "Paper", price: "6½" },
+  { name: "Ink", price: "3⅛" },
+] as const;
+
+function NewsColumn({ paragraphs, children }: { paragraphs: string[]; children?: ReactNode }) {
+  return (
+    <div className="np-column">
+      {paragraphs.map((paragraph) => (
+        <p key={paragraph.slice(0, 40)}>{paragraph}</p>
+      ))}
+      {children}
+    </div>
+  );
+}
+
+function NewsMidBand() {
+  return (
+    <div className="np-mid">
+      <hr className="np-hairline" />
+      <div className="np-lower">
+        <div className="np-lower-block">
+          <p className="np-kicker">Weather</p>
+          <p>
+            Mist in the morning, clearing by afternoon. Wind NW. Mild for the season. Last boat at
+            dusk.
+          </p>
+        </div>
+        <div className="np-lower-block np-markets">
+          <p className="np-kicker">Markets</p>
+          <ul>
+            {MARKET_PRICES.map((market) => (
+              <li key={market.name}>
+                <span>{market.name}</span>
+                <span>{market.price}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div className="np-lower-block">
+          <p className="np-kicker">Notice</p>
+          <p className="np-italic">
+            Wanted – night compositor. Apply rear door, ask for the stone. Steady work through
+            autumn.
+          </p>
+        </div>
+      </div>
+      <hr className="np-hairline" />
+    </div>
+  );
+}
+
 export function NewspaperBackdrop() {
   return (
     <div className="newspaper-backdrop" aria-hidden="true">
@@ -47,82 +103,19 @@ export function NewspaperBackdrop() {
         </header>
 
         <div className="np-columns np-columns-main">
-          <div className="np-column">
-            {COL_A.map((paragraph) => (
-              <p key={paragraph.slice(0, 40)}>{paragraph}</p>
-            ))}
-          </div>
-          <div className="np-column">
-            {COL_B.map((paragraph) => (
-              <p key={paragraph.slice(0, 40)}>{paragraph}</p>
-            ))}
-          </div>
-          <div className="np-column">
-            {COL_C.map((paragraph) => (
-              <p key={paragraph.slice(0, 40)}>{paragraph}</p>
-            ))}
+          <NewsColumn paragraphs={COL_A} />
+          <NewsColumn paragraphs={COL_B} />
+          <NewsColumn paragraphs={COL_C}>
             <p className="np-jump">Continued on page 4</p>
-          </div>
+          </NewsColumn>
         </div>
 
-        <div className="np-mid">
-          <hr className="np-hairline" />
-          <div className="np-lower">
-            <div className="np-lower-block">
-              <p className="np-kicker">Weather</p>
-              <p>
-                Mist in the morning, clearing by afternoon. Wind NW. Mild for the season. Last boat
-                at dusk.
-              </p>
-            </div>
-            <div className="np-lower-block np-markets">
-              <p className="np-kicker">Markets</p>
-              <ul>
-                <li>
-                  <span>Wheat</span>
-                  <span>12¼</span>
-                </li>
-                <li>
-                  <span>Coal</span>
-                  <span>8¾</span>
-                </li>
-                <li>
-                  <span>Paper</span>
-                  <span>6½</span>
-                </li>
-                <li>
-                  <span>Ink</span>
-                  <span>3⅛</span>
-                </li>
-              </ul>
-            </div>
-            <div className="np-lower-block">
-              <p className="np-kicker">Notice</p>
-              <p className="np-italic">
-                Wanted – night compositor. Apply rear door, ask for the stone. Steady work through
-                autumn.
-              </p>
-            </div>
-          </div>
-          <hr className="np-hairline" />
-        </div>
+        <NewsMidBand />
 
         <div className="np-columns np-columns-foot">
-          <div className="np-column">
-            {COL_D.map((paragraph) => (
-              <p key={paragraph.slice(0, 40)}>{paragraph}</p>
-            ))}
-          </div>
-          <div className="np-column">
-            {COL_E.map((paragraph) => (
-              <p key={paragraph.slice(0, 40)}>{paragraph}</p>
-            ))}
-          </div>
-          <div className="np-column">
-            {COL_F.map((paragraph) => (
-              <p key={paragraph.slice(0, 40)}>{paragraph}</p>
-            ))}
-          </div>
+          <NewsColumn paragraphs={COL_D} />
+          <NewsColumn paragraphs={COL_E} />
+          <NewsColumn paragraphs={COL_F} />
         </div>
       </div>
     </div>
