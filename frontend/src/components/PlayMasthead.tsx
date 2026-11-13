@@ -16,106 +16,129 @@ type PlayMastheadProps = {
   onLeaveToHome: () => void;
 };
 
-export function PlayMasthead({
-  mode,
-  isPlaying,
-  isPartyGame,
-  difficulty,
-  lobbyOpen,
-  isPaused,
-  lessonTechnique,
-  onToggleLobby,
-  onTogglePause,
+function HeaderSep() {
+  return (
+    <span className="gazette-play-header-sep" aria-hidden="true">
+      ·
+    </span>
+  );
+}
+
+function HeaderLink({ label, onClick }: { label: string; onClick: () => void }) {
+  return (
+    <button type="button" onClick={onClick} className="gazette-play-header-link">
+      {label}
+    </button>
+  );
+}
+
+function LessonRow({
+  technique,
+  onBackToGuide,
+}: {
+  technique: string | null;
+  onBackToGuide: () => void;
+}) {
+  return (
+    <>
+      <h1 className="home-masthead gazette-play-analysis-title">{lessonHudTitle(technique)}</h1>
+      <div className="gazette-play-masthead-actions">
+        <HeaderLink label="Back to Learning" onClick={onBackToGuide} />
+      </div>
+    </>
+  );
+}
+
+type SoloRowProps = Pick<
+  PlayMastheadProps,
+  | "difficulty"
+  | "isPartyGame"
+  | "lobbyOpen"
+  | "isPaused"
+  | "onToggleLobby"
+  | "onTogglePause"
+  | "onLeaveToHome"
+>;
+
+function SoloRow(props: SoloRowProps) {
+  const { lobbyOpen } = props;
+  return (
+    <>
+      <div className="gazette-play-difficulty">
+        <span>{props.difficulty}</span>
+        {props.isPartyGame && (
+          <>
+            <HeaderSep />
+            <button
+              type="button"
+              className={cn(
+                "gazette-play-lobby-link",
+                lobbyOpen && "gazette-play-lobby-link-active",
+              )}
+              aria-expanded={lobbyOpen}
+              onClick={props.onToggleLobby}
+            >
+              Lobby Stats
+            </button>
+          </>
+        )}
+      </div>
+      <div className="gazette-play-masthead-actions">
+        <HeaderLink label={props.isPaused ? "Resume" : "Pause"} onClick={props.onTogglePause} />
+        <HeaderSep />
+        <HeaderLink label="Go home" onClick={props.onLeaveToHome} />
+      </div>
+    </>
+  );
+}
+
+function AnalysisRow({
   onLeaveToHome,
-}: PlayMastheadProps) {
+  onBackToReview,
+}: {
+  onLeaveToHome: () => void;
+  onBackToReview: () => void;
+}) {
+  return (
+    <>
+      <h1 className="home-masthead gazette-play-analysis-title">Analysis mode</h1>
+      <div className="gazette-play-masthead-actions">
+        <HeaderLink label="Go home" onClick={onLeaveToHome} />
+        <HeaderSep />
+        <HeaderLink label="Back" onClick={onBackToReview} />
+      </div>
+    </>
+  );
+}
+
+function MastheadRow(props: PlayMastheadProps) {
+  const { mode } = props;
+  if (mode.kind === "lesson") {
+    return <LessonRow technique={props.lessonTechnique} onBackToGuide={mode.onBackToGuide} />;
+  }
+  if (!props.isPlaying) {
+    return (
+      <button type="button" onClick={props.onLeaveToHome} className="gazette-play-go-home">
+        Go home
+      </button>
+    );
+  }
+  if (mode.kind === "solo") {
+    return <SoloRow {...props} />;
+  }
+  return <AnalysisRow onLeaveToHome={props.onLeaveToHome} onBackToReview={mode.onBackToReview} />;
+}
+
+export function PlayMasthead(props: PlayMastheadProps) {
   return (
     <header
       className={cn(
         "gazette-play-masthead",
-        mode.kind !== "solo" && "gazette-play-masthead-analysis",
+        props.mode.kind !== "solo" && "gazette-play-masthead-analysis",
       )}
     >
       <div className="gazette-play-masthead-row">
-        {mode.kind === "lesson" ? (
-          <>
-            <h1 className="home-masthead gazette-play-analysis-title">
-              {lessonHudTitle(lessonTechnique)}
-            </h1>
-            <div className="gazette-play-masthead-actions">
-              <button
-                type="button"
-                onClick={mode.onBackToGuide}
-                className="gazette-play-header-link"
-              >
-                Back to Learning
-              </button>
-            </div>
-          </>
-        ) : (
-          <>
-            {isPlaying && mode.kind === "solo" && (
-              <div className="gazette-play-difficulty">
-                <span>{difficulty}</span>
-                {isPartyGame && (
-                  <>
-                    <span className="gazette-play-header-sep" aria-hidden="true">
-                      ·
-                    </span>
-                    <button
-                      type="button"
-                      className={cn(
-                        "gazette-play-lobby-link",
-                        lobbyOpen && "gazette-play-lobby-link-active",
-                      )}
-                      aria-expanded={lobbyOpen}
-                      onClick={onToggleLobby}
-                    >
-                      Lobby Stats
-                    </button>
-                  </>
-                )}
-              </div>
-            )}
-            {isPlaying && mode.kind === "analysis" && (
-              <h1 className="home-masthead gazette-play-analysis-title">Analysis mode</h1>
-            )}
-            {isPlaying && mode.kind === "solo" && (
-              <div className="gazette-play-masthead-actions">
-                <button type="button" onClick={onTogglePause} className="gazette-play-header-link">
-                  {isPaused ? "Resume" : "Pause"}
-                </button>
-                <span className="gazette-play-header-sep" aria-hidden="true">
-                  ·
-                </span>
-                <button type="button" onClick={onLeaveToHome} className="gazette-play-header-link">
-                  Go home
-                </button>
-              </div>
-            )}
-            {isPlaying && mode.kind === "analysis" && (
-              <div className="gazette-play-masthead-actions">
-                <button type="button" onClick={onLeaveToHome} className="gazette-play-header-link">
-                  Go home
-                </button>
-                <span className="gazette-play-header-sep" aria-hidden="true">
-                  ·
-                </span>
-                <button
-                  type="button"
-                  onClick={mode.onBackToReview}
-                  className="gazette-play-header-link"
-                >
-                  Back
-                </button>
-              </div>
-            )}
-            {!isPlaying && (
-              <button type="button" onClick={onLeaveToHome} className="gazette-play-go-home">
-                Go home
-              </button>
-            )}
-          </>
-        )}
+        <MastheadRow {...props} />
       </div>
       <div className="gazette-home-masthead-rule" />
     </header>
