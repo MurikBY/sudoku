@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
+from sqlalchemy.orm import load_only, selectinload
 
 from app.models.enums import Difficulty, GameStatus
 from app.models.game import SCORED_GAME, Game
@@ -25,9 +25,7 @@ async def get_game(
     for_update: bool = False,
 ) -> Game:
     game = await session.get(Game, game_id, with_for_update=for_update)
-    if game is None or game.user_id != user_id:
-        raise GameNotFound(f"game not found: {game_id}")
-    return game
+    return _require_owned(game, user_id, game_id)
 
 
 async def get_game_in_progress(
@@ -38,6 +36,32 @@ async def get_game_in_progress(
     for_update: bool = False,
 ) -> Game:
     game = await get_game(session, user_id, game_id, for_update=for_update)
+    return _require_in_progress(game)
+
+
+async def get_game_clock_in_progress(
+    session: AsyncSession,
+    user_id: int,
+    game_id: uuid.UUID,
+) -> Game:
+    # Only what credit_play_time reads, so a heartbeat skips the JSONB board state.
+    result = await session.execute(
+        select(Game)
+        .where(Game.id == game_id)
+        .options(load_only(Game.user_id, Game.status, Game.started_at, Game.elapsed_seconds))
+        .with_for_update(),
+    )
+    game = _require_owned(result.scalar_one_or_none(), user_id, game_id)
+    return _require_in_progress(game)
+
+
+def _require_owned(game: Game | None, user_id: int, game_id: uuid.UUID) -> Game:
+    if game is None or game.user_id != user_id:
+        raise GameNotFound(f"game not found: {game_id}")
+    return game
+
+
+def _require_in_progress(game: Game) -> Game:
     if game.status != GameStatus.in_progress:
         raise GameNotInProgress(f"game is not in progress: {game.id}")
     return game

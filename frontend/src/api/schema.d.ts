@@ -1962,13 +1962,11 @@ export interface operations {
         };
         responses: {
             /** @description Successful Response */
-            200: {
+            204: {
                 headers: {
                     [name: string]: unknown;
                 };
-                content: {
-                    "application/json": components["schemas"]["GameResponse"];
-                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {

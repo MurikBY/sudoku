@@ -76,7 +76,7 @@ Migration `018` creates `rating_counter_archive` and seeds one row per difficult
 
 ## Recorded time
 
-**Decision.** The server stores `elapsed_seconds` only when the reported value is at most the age of the game plus 5 seconds. A smaller report does not replace a larger stored value.
+**Decision.** The server stores `elapsed_seconds` only when the reported value is at most the age of the game plus 5 seconds. A smaller report does not replace a larger stored value. Moves, notes, undo, and hints carry the time. While the board runs, `PATCH /api/games/{id}` also sends it every 10 seconds and when the page hides or closes, with `keepalive`. That request answers 204 and reads only the timing columns of the row.
 
 **Why.** The client sends the clock. `credit_play_time` rejects a value past `started_at` plus `ELAPSED_TOLERANCE_SECONDS` (5). The bound stops a time the game cannot have lasted. It does not prove the player was fast. A clean win means no mistakes and no hints as the server recorded them. The rest of that boundary is in [SECURITY.md](SECURITY.md).
 

@@ -7,7 +7,7 @@ from app.models.enums import GameStatus
 from app.models.game import Game
 from app.services import clock
 from app.services.games.errors import ElapsedExceedsGameAge, GameNotComplete
-from app.services.games.queries import get_game_in_progress
+from app.services.games.queries import get_game_clock_in_progress, get_game_in_progress
 from app.services.lesson_progress_service import record_if_objective_met
 from app.services.sudoku.validator import matches_solution
 
@@ -57,11 +57,10 @@ async def sync_elapsed_seconds(
     user_id: int,
     game_id: uuid.UUID,
     elapsed_seconds: int,
-) -> Game:
-    game = await get_game_in_progress(session, user_id, game_id, for_update=True)
+) -> None:
+    game = await get_game_clock_in_progress(session, user_id, game_id)
     credit_play_time(game, elapsed_seconds)
     await session.commit()
-    return game
 
 
 async def complete_game(

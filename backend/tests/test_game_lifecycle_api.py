@@ -54,8 +54,10 @@ async def test_sync_elapsed_seconds_without_move(
         json={"elapsed_seconds": 125},
         headers=auth_headers,
     )
-    assert response.status_code == 200
-    assert response.json()["elapsed_seconds"] == 125
+    assert response.status_code == 204
+    assert response.content == b""
+    fetched = await async_client.get(f"/api/games/{game_id}", headers=auth_headers)
+    assert fetched.json()["elapsed_seconds"] == 125
 
     stats = await async_client.get("/api/stats", headers=auth_headers)
     assert stats.status_code == 200
@@ -66,7 +68,7 @@ async def test_sync_elapsed_seconds_without_move(
         json={"elapsed_seconds": 140},
         headers=auth_headers,
     )
-    assert again.status_code == 200
+    assert again.status_code == 204
 
     stats_after = await async_client.get("/api/stats", headers=auth_headers)
     assert stats_after.json()["total_play_seconds"] == 140
@@ -299,8 +301,9 @@ async def test_sync_accepts_elapsed_seconds_within_start_tolerance(
         json={"elapsed_seconds": 5},
         headers=auth_headers,
     )
-    assert response.status_code == 200
-    assert response.json()["elapsed_seconds"] == 5
+    assert response.status_code == 204
+    fetched = await async_client.get(f"/api/games/{game_id}", headers=auth_headers)
+    assert fetched.json()["elapsed_seconds"] == 5
 
 
 @pytest.mark.asyncio
@@ -321,7 +324,7 @@ async def test_complete_keeps_larger_elapsed_when_request_is_smaller(
         json={"elapsed_seconds": 100},
         headers=auth_headers,
     )
-    assert synced.status_code == 200
+    assert synced.status_code == 204
 
     for index, value in empty_cell_fills():
         move = await async_client.put(

@@ -243,7 +243,7 @@ async def test_lesson_elapsed_and_complete_skip_stats(
         json={"elapsed_seconds": 120},
         headers=auth_headers,
     )
-    assert synced.status_code == 200
+    assert synced.status_code == 204
     stats_during = await async_client.get("/api/stats", headers=auth_headers)
     assert stats_during.json()["total_play_seconds"] == 0
     assert stats_during.json()["games_started"] == 0

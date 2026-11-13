@@ -4,7 +4,7 @@ import { syncGameProgress } from "@/api/games";
 import { bestEffort } from "@/lib/api/bestEffort";
 import { formatElapsedSeconds } from "@/lib/format/formatElapsedSeconds";
 
-const HEARTBEAT_INTERVAL_MS = 2000;
+const HEARTBEAT_INTERVAL_MS = 10_000;
 const TICK_INTERVAL_MS = 1000;
 
 export type UseGameTimerParams = {
@@ -59,8 +59,23 @@ export function useGameTimer({ gameId, initialElapsedSeconds, isRunning }: UseGa
     const heartbeatId = window.setInterval(() => {
       void syncElapsedToServer();
     }, HEARTBEAT_INTERVAL_MS);
+    // The interval can leave 10 seconds unsent, so hiding or closing the page sends them.
+    const syncWhenHidden = () => {
+      if (document.visibilityState === "hidden") {
+        void syncElapsedToServer();
+      }
+    };
+    const syncOnPageHide = () => {
+      void syncElapsedToServer();
+    };
+    document.addEventListener("visibilitychange", syncWhenHidden);
+    window.addEventListener("pagehide", syncOnPageHide);
 
-    return () => window.clearInterval(heartbeatId);
+    return () => {
+      window.clearInterval(heartbeatId);
+      document.removeEventListener("visibilitychange", syncWhenHidden);
+      window.removeEventListener("pagehide", syncOnPageHide);
+    };
   }, [gameId, isRunning, syncElapsedToServer]);
 
   const setElapsedFromServer = useCallback((seconds: number) => {

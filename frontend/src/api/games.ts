@@ -117,11 +117,13 @@ export function fetchLessonProgress(): Promise<LessonProgressResponse> {
   return readJson(api.GET("/api/games/lesson-progress"));
 }
 
-export function syncGameProgress(gameId: string, elapsedSeconds: number): Promise<Game> {
-  return readJson(
+// keepalive lets the sync sent while the page hides or closes still arrive.
+export function syncGameProgress(gameId: string, elapsedSeconds: number): Promise<void> {
+  return readEmpty(
     api.PATCH("/api/games/{game_id}", {
       params: { path: { game_id: gameId } },
       body: { elapsed_seconds: elapsedSeconds },
+      keepalive: true,
     }),
   );
 }

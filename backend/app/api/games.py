@@ -192,20 +192,19 @@ async def get_game(
     return await game_response(session, game)
 
 
-@router.patch("/{game_id}", response_model=GameResponse)
+@router.patch("/{game_id}", status_code=204)
 async def sync_game_progress(
     game_id: uuid.UUID,
     body: SyncGameRequest,
     current_user: CurrentUser,
     session: DbSession,
-) -> GameResponse:
-    game = await lifecycle.sync_elapsed_seconds(
+) -> None:
+    await lifecycle.sync_elapsed_seconds(
         session,
         current_user.id,
         game_id,
         body.elapsed_seconds,
     )
-    return await game_response(session, game)
 
 
 @router.put("/{game_id}/cells/{index}", response_model=MoveCellResponse)
