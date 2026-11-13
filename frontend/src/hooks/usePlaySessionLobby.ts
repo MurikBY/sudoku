@@ -2,10 +2,9 @@ import { useCallback } from "react";
 
 import type { ScreenState } from "@/hooks/screenState";
 import type { PlaySessionLobby } from "@/hooks/playSessionTypes";
-import type { usePartyLobby } from "@/hooks/usePartyLobby";
+import { usePartyLobby } from "@/hooks/usePartyLobby";
 
-type UsePlaySessionLobbyArgs = {
-  partyLobby: ReturnType<typeof usePartyLobby>;
+type UsePlaySessionLobbyArgs = Parameters<typeof usePartyLobby>[0] & {
   screenName: ScreenState["name"];
   releasePlayLock: () => Promise<void>;
   playLockIsHeld: () => Promise<boolean>;
@@ -13,11 +12,12 @@ type UsePlaySessionLobbyArgs = {
 
 // The lobby holds the play lock only while it is the screen in front, not over a running board.
 export function usePlaySessionLobby({
-  partyLobby,
   screenName,
   releasePlayLock,
   playLockIsHeld,
+  ...partyLobbyArgs
 }: UsePlaySessionLobbyArgs) {
+  const partyLobby = usePartyLobby(partyLobbyArgs);
   const { closeLobby, handleLeave, dismissClosedLobby, openLobby } = partyLobby;
 
   const handleCloseLobby = useCallback(() => {
@@ -77,5 +77,11 @@ export function usePlaySessionLobby({
     onClearError: partyLobby.clearError,
   };
 
-  return { lobby, handleCloseLobby, handleLeaveLobby, handlePlayWithFriends };
+  return {
+    lobby,
+    openLobbyWithInviteCode: partyLobby.openLobbyWithInviteCode,
+    handleCloseLobby,
+    handleLeaveLobby,
+    handlePlayWithFriends,
+  };
 }

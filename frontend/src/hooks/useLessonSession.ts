@@ -2,6 +2,7 @@ import { useCallback, useState, type Dispatch, type RefObject } from "react";
 
 import { abandonGame, createLessonGame } from "@/api/games";
 import type { Game } from "@/api/types";
+import type { PlaySessionLesson } from "@/hooks/playSessionTypes";
 import type { ScreenAction } from "@/hooks/screenState";
 import { formatApiErrorMessage } from "@/lib/api/apiError";
 import { bestEffort } from "@/lib/api/bestEffort";
@@ -20,7 +21,7 @@ export function useLessonSession({
   acquirePlayLock,
   releasePlayLock,
   activeGameRef,
-}: UseLessonSessionArgs) {
+}: UseLessonSessionArgs): PlaySessionLesson {
   const [lessonStartBusy, setLessonStartBusy] = useState(false);
   const [lessonStartError, setLessonStartError] = useState<string | null>(null);
 
@@ -73,9 +74,11 @@ export function useLessonSession({
   }, [activeGameRef, dispatch, releasePlayLock]);
 
   return {
-    lessonStartBusy,
-    lessonStartError,
-    handleStartLesson,
-    handleBackFromLesson,
+    start: (technique, variant, excludePositionId) => {
+      void handleStartLesson(technique, variant, excludePositionId);
+    },
+    back: handleBackFromLesson,
+    busy: lessonStartBusy,
+    error: lessonStartError,
   };
 }

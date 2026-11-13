@@ -37,13 +37,13 @@ export type PlaySessionLobby = {
   onClearError: () => void;
 };
 
-type PlaySessionReview = {
+export type PlaySessionReview = {
   back: () => void;
   open: (review: GameReview) => void;
   openParty: (partyId: string) => void;
 };
 
-type PlaySessionAnalysis = {
+export type PlaySessionAnalysis = {
   playFromHere: (shareCode: string, eventIndex: number) => void;
   busy: boolean;
   error: string | null;
@@ -51,7 +51,7 @@ type PlaySessionAnalysis = {
   backToReview: () => void;
 };
 
-type PlaySessionLesson = {
+export type PlaySessionLesson = {
   start: (
     technique: TechniqueArticleId,
     variant: "taught" | "practice",
@@ -62,7 +62,7 @@ type PlaySessionLesson = {
   error: string | null;
 };
 
-type PlaySessionLeave = {
+export type PlaySessionLeave = {
   home: () => void;
   rating: () => void;
 };

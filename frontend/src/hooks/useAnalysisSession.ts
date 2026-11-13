@@ -2,6 +2,7 @@ import { useCallback, useState, type Dispatch, type RefObject } from "react";
 
 import { abandonGame, createAnalysisGame } from "@/api/games";
 import type { Game } from "@/api/types";
+import type { PlaySessionAnalysis } from "@/hooks/playSessionTypes";
 import type { ScreenAction, ScreenState } from "@/hooks/screenState";
 import { formatApiErrorMessage } from "@/lib/api/apiError";
 import { bestEffort } from "@/lib/api/bestEffort";
@@ -21,7 +22,7 @@ export function useAnalysisSession({
   ensurePlayLock,
   releasePlayLock,
   activeGameRef,
-}: UseAnalysisSessionArgs) {
+}: UseAnalysisSessionArgs): PlaySessionAnalysis {
   const [playFromHereBusy, setPlayFromHereBusy] = useState(false);
   const [playFromHereError, setPlayFromHereError] = useState<string | null>(null);
 
@@ -76,10 +77,12 @@ export function useAnalysisSession({
   }, [activeGameRef, dispatch, releasePlayLock]);
 
   return {
-    playFromHereBusy,
-    playFromHereError,
-    handlePlayFromHere,
-    handleAnalysisComplete,
-    handleBackFromAnalysis,
+    playFromHere: (shareCode, eventIndex) => {
+      void handlePlayFromHere(shareCode, eventIndex);
+    },
+    busy: playFromHereBusy,
+    error: playFromHereError,
+    onSolved: handleAnalysisComplete,
+    backToReview: handleBackFromAnalysis,
   };
 }
