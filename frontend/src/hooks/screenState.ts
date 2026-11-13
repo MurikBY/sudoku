@@ -2,7 +2,7 @@ import type { Game, GameReview } from "@/api/types";
 import type { GameAssists } from "@/lib/play/gameSettings";
 import type { GuideRubricId } from "@/content/infoGuideCopy";
 import type { TechniqueArticleId } from "@/content/techniquesGuideCopy";
-import type { StatsMode } from "@/pages/StatsPage";
+import type { StatsMode } from "@/hooks/useStatsMode";
 
 export type ScreenState =
   | { name: "home" }
