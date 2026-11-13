@@ -29,6 +29,8 @@ HTTP_STATUS_BY_ERROR_CATEGORY: dict[type[DomainError], int] = {
 # Starlette raises this base for unknown routes and methods.
 # FastAPI's HTTPException subclasses it, so one handler covers both.
 _HTTP_CODE_BY_STATUS: dict[int, str] = {
+    # FastAPI raises 400 itself when the request body cannot be read or decoded.
+    400: "bad_request",
     401: "unauthorized",
     403: "forbidden",
     404: "not_found",

@@ -305,6 +305,20 @@ def test_openapi_validation_error_matches_the_handler() -> None:
 
 
 @pytest.mark.asyncio
+async def test_unreadable_body_returns_bad_request_before_auth(async_client: AsyncClient) -> None:
+    response = await async_client.post(
+        "/api/parties/join",
+        content=b'{"code": "\xff"}',
+        headers={"Content-Type": "application/json"},
+    )
+    assert response.status_code == 400
+    assert response.json() == {
+        "code": "bad_request",
+        "message": "There was an error parsing the body",
+    }
+
+
+@pytest.mark.asyncio
 async def test_unknown_path_returns_not_found_code(async_client: AsyncClient) -> None:
     response = await async_client.get("/api/does-not-exist")
     assert response.status_code == 404
