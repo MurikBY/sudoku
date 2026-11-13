@@ -62,7 +62,7 @@ The poll is the recovery. A dropped socket still learns that the party started, 
 
 Migration `018` creates `rating_counter_archive` and seeds one row per difficulty: `games_started`, `games_completed`, `clean_wins`, and `clean_elapsed_sum`. Later resets add to those rows.
 
-`build_user_stats` reads live `games` only. The Rating summary adds the archive to live scored games (`is_analysis` and `is_lesson` are false), so started games, completed games, clean wins, and the average clean time include it. The average is the combined `clean_elapsed_sum` divided by the combined clean-win count. Best clean wins ranks live `CLEAN_WIN` rows only: completed, no mistakes, no hints, and not an analysis or a lesson. `reset_user_play_data` folds that player's current scored games into the same archive, then deletes the rows. A reset follows the same split.
+`build_user_stats` reads live `games` only. The Rating summary adds the archive to live scored games (`is_analysis` and `is_lesson` are false), so started games, completed games, clean wins, and the average clean time include it. The average is the combined `clean_elapsed_sum` divided by the combined clean-win count. Best clean wins ranks live `CLEAN_WIN` rows only: completed, no mistakes, no hints, and not an analysis or a lesson. `reset_user_play_data` first leaves a waiting lobby the way the Leave button does, so a hosted lobby is cancelled and the others get `members`. It then folds that player's current scored games into the same archive and deletes the rows. A reset follows the same split.
 
 **Trade-off.** Downgrade cannot restore the games or the old best times. The rating average mixes the archived totals with games played under the current rules. My Stats does not show the archive.
 

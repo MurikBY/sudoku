@@ -214,6 +214,15 @@ async def leave_party(session: AsyncSession, user: User, party_id: uuid.UUID) ->
     await _announce_member_left(await load_party(session, party_id), user.id)
 
 
+async def leave_waiting_parties(session: AsyncSession, user: User) -> None:
+    for party_id in sorted(await _waiting_party_ids(session, user.id)):
+        try:
+            await leave_party(session, user, party_id)
+        except PartyNotWaiting:
+            # It started between the lookup and the lock; a started party keeps its members.
+            continue
+
+
 async def cancel_party(session: AsyncSession, user: User, party_id: uuid.UUID) -> None:
     party = await load_party(session, party_id, for_update=True)
     if party.host_user_id != user.id:

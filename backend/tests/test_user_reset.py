@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 
 from app.db import get_session
 from app.main import app
+from app.services.party_ws_hub import party_ws_hub
 from app.services.sudoku.carver import givens_count
 from app.services.sudoku.puzzle import GeneratedPuzzle
 from tests.fixtures import KNOWN_PUZZLE, KNOWN_SOLUTION
@@ -22,7 +23,7 @@ FULL_ASSISTS = {
     "sticky_digit": True,
 }
 
-PARTY_ASSISTS = {
+PARTY_ASSISTS_WITHOUT_STICKY_DIGIT = {
     "pencil": True,
     "highlight_peers": False,
     "highlight_same_digit": True,
@@ -146,7 +147,7 @@ async def test_reset_play_data_clears_games_rating_party_keeps_prefs(
 
     create = await async_client.post(
         "/api/parties",
-        json={"difficulty": "easy", "assists": PARTY_ASSISTS},
+        json={"difficulty": "easy", "assists": PARTY_ASSISTS_WITHOUT_STICKY_DIGIT},
         headers=host,
     )
     assert create.status_code == 201
@@ -277,3 +278,60 @@ async def test_reset_succeeds_when_another_player_analyzed_the_game(
     loaded = await _get_game_in_new_session(async_client, analysis_body["id"], analyst)
     assert loaded.status_code == 200
     assert loaded.json()["analysis_source_game_id"] is None
+
+
+async def _create_lobby(async_client: AsyncClient, host: dict[str, str]) -> dict:
+    created = await async_client.post(
+        "/api/parties",
+        json={"difficulty": "easy", "assists": PARTY_ASSISTS_WITHOUT_STICKY_DIGIT},
+        headers=host,
+    )
+    assert created.status_code == 201
+    return created.json()
+
+
+@pytest.mark.asyncio
+async def test_reset_cancels_the_lobby_the_player_hosts(
+    async_client: AsyncClient,
+    init_data_for,
+) -> None:
+    host = init_data_for(901, "reset_host")
+    guest = init_data_for(902, "reset_guest")
+    lobby = await _create_lobby(async_client, host)
+    joined = await async_client.post(
+        "/api/parties/join",
+        json={"code": lobby["code"]},
+        headers=guest,
+    )
+    assert joined.status_code == 200
+
+    reset = await async_client.post("/api/users/me/reset-play-data", headers=host)
+    assert reset.status_code == 204
+
+    assert (await async_client.get("/api/parties/current", headers=guest)).json() is None
+
+
+@pytest.mark.asyncio
+async def test_reset_leaves_the_lobby_the_player_joined(
+    async_client: AsyncClient,
+    init_data_for,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    host = init_data_for(903, "stay_host")
+    guest = init_data_for(904, "reset_guest_b")
+    lobby = await _create_lobby(async_client, host)
+    await async_client.post("/api/parties/join", json={"code": lobby["code"]}, headers=guest)
+    closed: list[int] = []
+
+    async def record_close_user(_party_id, user_id: int) -> None:
+        closed.append(user_id)
+
+    monkeypatch.setattr(party_ws_hub, "close_user", record_close_user)
+
+    reset = await async_client.post("/api/users/me/reset-play-data", headers=guest)
+    assert reset.status_code == 204
+
+    current = (await async_client.get("/api/parties/current", headers=host)).json()
+    assert current["status"] == "waiting"
+    assert [member["user_id"] for member in current["members"]] == [903]
+    assert closed == [904]
