@@ -60,7 +60,7 @@ async def test_generate_before_start_raises() -> None:
 async def test_generation_failed_surfaces_as_puzzle_generation_failed() -> None:
     generator = PuzzleGenerator(worker=raise_generation_failed)
     async with _running(generator):
-        with pytest.raises(PuzzleGenerationFailed, match="^x$"):
+        with pytest.raises(PuzzleGenerationFailed, match=r"^x$"):
             await generator.generate(Difficulty.easy)
 
 

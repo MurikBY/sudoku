@@ -14,7 +14,7 @@ class _FakeSessionCM:
 
 def _patch_pool_settings(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(puzzle_pool_service.settings, "PUZZLE_POOL_TARGET_SIZE", 50)
-    monkeypatch.setattr("app.db.session_factory", lambda: _FakeSessionCM())
+    monkeypatch.setattr("app.db.session_factory", _FakeSessionCM)
 
 
 @pytest.mark.asyncio

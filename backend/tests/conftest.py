@@ -7,13 +7,13 @@ from datetime import UTC, datetime, timedelta
 import asyncpg
 import pytest
 import pytest_asyncio
+from alembic import command
+from alembic.config import Config
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy import delete, text
 from sqlalchemy.engine import make_url
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 
-from alembic import command
-from alembic.config import Config
 from tests.database_guard import is_test_database_url
 from tests.fixtures import KNOWN_PUZZLE, KNOWN_SOLUTION, TEST_ARCHIVE, make_init_data
 

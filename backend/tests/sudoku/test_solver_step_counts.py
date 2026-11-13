@@ -1,3 +1,5 @@
+from typing import NamedTuple
+
 import pytest
 
 from app.services.sudoku.technique_solver import (
@@ -42,52 +44,47 @@ _XY_ALL_TECHNIQUES = frozenset(
     }
 )
 
-_ROWS = [
-    ("known", "easy", True, Technique.NAKED_SINGLE, 1, 0, 0),
-    ("known", "medium", True, Technique.NAKED_SINGLE, 1, 0, 0),
-    ("known", "all", True, Technique.NAKED_SINGLE, 1, 0, 0),
-    ("singles", "easy", True, Technique.NAKED_SINGLE, 7, 0, 0),
-    ("singles", "medium", True, Technique.NAKED_SINGLE, 7, 0, 0),
-    ("singles", "all", True, Technique.NAKED_SINGLE, 7, 0, 0),
-    ("medium", "easy", False, Technique.HIDDEN_SINGLE, 3, 0, 0),
-    ("medium", "medium", True, Technique.BOX_LINE_REDUCTION, 13, 4, 0),
-    ("medium", "all", True, Technique.BOX_LINE_REDUCTION, 13, 4, 0),
-    ("shallow", "easy", False, Technique.HIDDEN_SINGLE, 2, 0, 0),
-    ("shallow", "medium", True, Technique.NAKED_PAIR, 8, 1, 0),
-    ("shallow", "all", True, Technique.NAKED_PAIR, 8, 1, 0),
-    ("xy", "easy", False, Technique.HIDDEN_SINGLE, 3, 0, 0),
-    ("xy", "medium", False, Technique.BOX_LINE_REDUCTION, 4, 5, 0),
-    ("xy", "all", True, Technique.XY_WING, 10, 5, 2),
+
+class StepCountCase(NamedTuple):
+    puzzle_name: str
+    allowed_name: str
+    solved: bool
+    hardest: Technique
+    easy_steps: int
+    medium_steps: int
+    hard_steps: int
+
+
+_CASES = [
+    StepCountCase("known", "easy", True, Technique.NAKED_SINGLE, 1, 0, 0),
+    StepCountCase("known", "medium", True, Technique.NAKED_SINGLE, 1, 0, 0),
+    StepCountCase("known", "all", True, Technique.NAKED_SINGLE, 1, 0, 0),
+    StepCountCase("singles", "easy", True, Technique.NAKED_SINGLE, 7, 0, 0),
+    StepCountCase("singles", "medium", True, Technique.NAKED_SINGLE, 7, 0, 0),
+    StepCountCase("singles", "all", True, Technique.NAKED_SINGLE, 7, 0, 0),
+    StepCountCase("medium", "easy", False, Technique.HIDDEN_SINGLE, 3, 0, 0),
+    StepCountCase("medium", "medium", True, Technique.BOX_LINE_REDUCTION, 13, 4, 0),
+    StepCountCase("medium", "all", True, Technique.BOX_LINE_REDUCTION, 13, 4, 0),
+    StepCountCase("shallow", "easy", False, Technique.HIDDEN_SINGLE, 2, 0, 0),
+    StepCountCase("shallow", "medium", True, Technique.NAKED_PAIR, 8, 1, 0),
+    StepCountCase("shallow", "all", True, Technique.NAKED_PAIR, 8, 1, 0),
+    StepCountCase("xy", "easy", False, Technique.HIDDEN_SINGLE, 3, 0, 0),
+    StepCountCase("xy", "medium", False, Technique.BOX_LINE_REDUCTION, 4, 5, 0),
+    StepCountCase("xy", "all", True, Technique.XY_WING, 10, 5, 2),
 ]
 
 
 @pytest.mark.parametrize(
-    (
-        "puzzle_name",
-        "allowed_name",
-        "solved",
-        "hardest",
-        "easy_steps",
-        "medium_steps",
-        "hard_steps",
-    ),
-    _ROWS,
-    ids=[f"{puzzle_name}-{allowed_name}" for puzzle_name, allowed_name, *_rest in _ROWS],
+    "case",
+    _CASES,
+    ids=[f"{case.puzzle_name}-{case.allowed_name}" for case in _CASES],
 )
-def test_solve_with_techniques_step_counts(
-    puzzle_name: str,
-    allowed_name: str,
-    solved: bool,
-    hardest: Technique,
-    easy_steps: int,
-    medium_steps: int,
-    hard_steps: int,
-) -> None:
-    result = solve_with_techniques(_PUZZLES[puzzle_name], _ALLOWED[allowed_name])
-    assert result.solved is solved
-    assert result.hardest_technique == hardest
-    assert result.easy_step_count == easy_steps
-    assert result.medium_step_count == medium_steps
-    assert result.hard_step_count == hard_steps
-    if puzzle_name == "xy" and allowed_name == "all":
+def test_solve_with_techniques_step_counts(case: StepCountCase) -> None:
+    result = solve_with_techniques(_PUZZLES[case.puzzle_name], _ALLOWED[case.allowed_name])
+    assert result.solved is case.solved
+    assert result.hardest_technique == case.hardest
+    assert result.easy_step_count == case.easy_steps
+    assert result.medium_step_count == case.medium_steps
+    assert result.hard_step_count == case.hard_steps
+    if case.puzzle_name == "xy" and case.allowed_name == "all":
         assert result.techniques_used == _XY_ALL_TECHNIQUES

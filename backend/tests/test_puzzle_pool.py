@@ -152,7 +152,7 @@ async def test_concurrent_refill_after_take_stays_within_target(
 ):
     target = 4
     monkeypatch.setattr(puzzle_pool_service.settings, "PUZZLE_POOL_TARGET_SIZE", target)
-    monkeypatch.setattr(puzzle_pool_service, "open_session", lambda: _IdleSession())
+    monkeypatch.setattr(puzzle_pool_service, "open_session", _IdleSession)
 
     available = target - 1
 

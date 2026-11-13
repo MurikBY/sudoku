@@ -359,7 +359,7 @@ async def test_admin_start_clears_broadcast_pending(admin_ids: int, monkeypatch)
     async def fake_upsert(_session, _user_id, _username) -> None:
         return None
 
-    monkeypatch.setattr("app.db.session_factory", lambda: FakeSessionCM())
+    monkeypatch.setattr("app.db.session_factory", FakeSessionCM)
     monkeypatch.setattr("app.bot.handlers.upsert_telegram_user", fake_upsert)
     await handle_broadcast(FakeMessage(admin_ids))
     start = FakeMessage(admin_ids)

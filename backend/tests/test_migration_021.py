@@ -119,7 +119,7 @@ def test_normalize_user_preferences_rejects_a_non_object():
 
 
 def test_normalize_user_preferences_rejects_a_non_object_assist_payload():
-    with pytest.raises(ValueError, match="preferences.assists must be an object"):
+    with pytest.raises(ValueError, match=r"preferences\.assists must be an object"):
         _MIGRATION.normalize_user_preferences({"assists": []})
 
 

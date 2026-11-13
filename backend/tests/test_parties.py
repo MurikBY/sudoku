@@ -718,7 +718,7 @@ async def test_concurrent_join_during_start_does_not_leave_a_member_without_a_ga
                 guest = await session.get(User, guest_id)
                 if guest is None:
                     raise RuntimeError(f"guest missing: {guest_id}")
-                with pytest.raises(DBAPIError, match="(?i)lock timeout"):
+                with pytest.raises(DBAPIError, match=r"(?i)lock timeout"):
                     await join_party(session, guest, code)
                 await session.rollback()
         finally:
