@@ -54,6 +54,40 @@ function withSnapshot(state: PartyLobbyState, party: Party): PartyLobbyState {
   return { ...state, party, members: party.members };
 }
 
+type MembersEvent = Extract<PartyLobbyAction, { type: "membersEvent" }>;
+
+function withMembersEvent(state: PartyLobbyState, event: MembersEvent): PartyLobbyState {
+  if (state.party === null) {
+    return { ...state, members: event.members };
+  }
+  return {
+    ...state,
+    members: event.members,
+    party: {
+      ...state.party,
+      status: event.status,
+      difficulty: event.difficulty,
+      members: event.members,
+    },
+  };
+}
+
+function withoutParty(state: PartyLobbyState): PartyLobbyState {
+  return { ...state, party: null, members: [], joinedOk: false };
+}
+
+function closedByHost(state: PartyLobbyState): PartyLobbyState {
+  return { ...withoutParty(state), error: null, phase: "closed", open: true };
+}
+
+function openedForInvite(state: PartyLobbyState, code: string): PartyLobbyState {
+  return { ...withoutParty(state), open: true, error: null, busy: true, joinCode: code };
+}
+
+function leftLobby(state: PartyLobbyState): PartyLobbyState {
+  return { ...withoutParty(state), phase: "chooser", open: false };
+}
+
 export function partyLobbyReducer(
   state: PartyLobbyState,
   action: PartyLobbyAction,
@@ -72,29 +106,9 @@ export function partyLobbyReducer(
     case "applySnapshot":
       return withSnapshot(state, action.party);
     case "membersEvent":
-      if (state.party === null) {
-        return { ...state, members: action.members };
-      }
-      return {
-        ...state,
-        members: action.members,
-        party: {
-          ...state.party,
-          status: action.status,
-          difficulty: action.difficulty,
-          members: action.members,
-        },
-      };
+      return withMembersEvent(state, action);
     case "closedByHost":
-      return {
-        ...state,
-        party: null,
-        members: [],
-        joinedOk: false,
-        error: null,
-        phase: "closed",
-        open: true,
-      };
+      return closedByHost(state);
     case "close":
       return {
         ...state,
@@ -111,29 +125,13 @@ export function partyLobbyReducer(
     case "chooseJoin":
       return { ...state, phase: "guest" };
     case "openInvite":
-      return {
-        ...state,
-        open: true,
-        error: null,
-        busy: true,
-        joinCode: action.code,
-        joinedOk: false,
-        party: null,
-        members: [],
-      };
+      return openedForInvite(state, action.code);
     case "joinFailed":
       return { ...state, joinedOk: false };
     case "inviteFailed":
       return { ...state, phase: "guest", joinedOk: false };
     case "leaveReset":
-      return {
-        ...state,
-        party: null,
-        members: [],
-        joinedOk: false,
-        phase: "chooser",
-        open: false,
-      };
+      return leftLobby(state);
     case "setBusy":
       return { ...state, busy: action.busy };
     case "setError":
