@@ -50,24 +50,56 @@ type Highlights = {
   sameNote: ReadonlySet<number>;
 };
 
-type HighlightInputs = {
-  currentGrid: string;
-  selectedIndex: number | null;
-  notes: CellNotesMap;
-  stickyDigit: number | null;
-  highlightPeers: boolean;
-  highlightSameDigit: boolean;
-};
+type ResolvedGridProps = SudokuGridProps &
+  Required<
+    Pick<
+      SudokuGridProps,
+      | "notes"
+      | "stickyDigit"
+      | "conflictIndices"
+      | "wrongDigitIndices"
+      | "celebratingIndices"
+      | "animatedMistakeIndex"
+      | "hintedCellIndex"
+      | "coachOutlineIndices"
+      | "coachElimIndices"
+      | "coachHouses"
+      | "pencilActive"
+      | "highlightPeers"
+      | "highlightSameDigit"
+      | "notePaintEnabled"
+    >
+  >;
 
-function boardHighlights(inputs: HighlightInputs): Highlights {
-  const { currentGrid, selectedIndex, notes, stickyDigit } = inputs;
+function resolveGridProps(props: SudokuGridProps): ResolvedGridProps {
+  return {
+    ...props,
+    notes: props.notes ?? EMPTY_NOTES,
+    stickyDigit: props.stickyDigit ?? null,
+    conflictIndices: props.conflictIndices ?? EMPTY_INDEX_SET,
+    wrongDigitIndices: props.wrongDigitIndices ?? EMPTY_INDEX_SET,
+    celebratingIndices: props.celebratingIndices ?? EMPTY_INDEX_SET,
+    animatedMistakeIndex: props.animatedMistakeIndex ?? null,
+    hintedCellIndex: props.hintedCellIndex ?? null,
+    coachOutlineIndices: props.coachOutlineIndices ?? EMPTY_INDEX_SET,
+    coachElimIndices: props.coachElimIndices ?? EMPTY_INDEX_SET,
+    coachHouses: props.coachHouses ?? NO_HOUSES,
+    pencilActive: props.pencilActive ?? false,
+    highlightPeers: props.highlightPeers ?? true,
+    highlightSameDigit: props.highlightSameDigit ?? true,
+    notePaintEnabled: props.notePaintEnabled ?? false,
+  };
+}
+
+function boardHighlights(grid: ResolvedGridProps): Highlights {
+  const { currentGrid, selectedIndex, notes, stickyDigit } = grid;
   const peers =
-    !inputs.highlightPeers || selectedIndex === null
+    !grid.highlightPeers || selectedIndex === null
       ? new Set<number>()
       : new Set(peerIndices(selectedIndex));
   const selectedDigit = selectedIndex === null ? null : cellDigitValue(currentGrid, selectedIndex);
   const focusDigit = stickyDigit ?? selectedDigit;
-  const showSame = inputs.highlightSameDigit && focusDigit !== null;
+  const showSame = grid.highlightSameDigit && focusDigit !== null;
   return {
     focusDigit,
     peers,
@@ -78,68 +110,40 @@ function boardHighlights(inputs: HighlightInputs): Highlights {
   };
 }
 
-export function SudokuGrid({
-  puzzle,
-  currentGrid,
-  notes = EMPTY_NOTES,
-  selectedIndex,
-  stickyDigit = null,
-  conflictIndices = EMPTY_INDEX_SET,
-  wrongDigitIndices = EMPTY_INDEX_SET,
-  celebratingIndices = EMPTY_INDEX_SET,
-  animatedMistakeIndex = null,
-  hintedCellIndex = null,
-  flashedCellIndices,
-  coachOutlineIndices = EMPTY_INDEX_SET,
-  coachElimIndices = EMPTY_INDEX_SET,
-  coachHouses = NO_HOUSES,
-  pencilActive = false,
-  highlightPeers = true,
-  highlightSameDigit = true,
-  notePaintEnabled = false,
-  onSelectCell,
-  onPaintCell,
-  onDigit,
-  onClear,
-}: SudokuGridProps) {
-  const pointer = useNotePaintPointer({ notePaintEnabled, onSelectCell, onPaintCell });
-  const highlights = boardHighlights({
-    currentGrid,
-    selectedIndex,
-    notes,
-    stickyDigit,
-    highlightPeers,
-    highlightSameDigit,
-  });
-
-  const cellState = (index: number): CellState => {
-    const isGiven = isGivenCell(puzzle, index);
-    const isSelected = selectedIndex === index;
-    const isCoachOutline = coachOutlineIndices.has(index);
-    return {
-      isGiven,
-      isSelected,
-      isPeer: highlights.peers.has(index),
-      isSameDigit: highlights.sameDigit.has(index),
-      isSameNote: highlights.sameNote.has(index),
-      isConflict: conflictIndices.has(index),
-      isWrong: wrongDigitIndices.has(index),
-      isCelebrating: celebratingIndices.has(index),
-      isAnimatedMistake: animatedMistakeIndex === index,
-      isHintFlash: hintedCellIndex === index || (flashedCellIndices?.has(index) ?? false),
-      isCoachOutline,
-      isCoachElim: !isCoachOutline && coachElimIndices.has(index),
-      showPencilMark: pencilActive && isSelected && !isGiven,
-      notes: notesForCell(notes, index),
-      digitDisplay: cellDisplayValue(currentGrid, index),
-    };
+function cellStateAt(grid: ResolvedGridProps, highlights: Highlights, index: number): CellState {
+  const isGiven = isGivenCell(grid.puzzle, index);
+  const isSelected = grid.selectedIndex === index;
+  const isCoachOutline = grid.coachOutlineIndices.has(index);
+  return {
+    isGiven,
+    isSelected,
+    isPeer: highlights.peers.has(index),
+    isSameDigit: highlights.sameDigit.has(index),
+    isSameNote: highlights.sameNote.has(index),
+    isConflict: grid.conflictIndices.has(index),
+    isWrong: grid.wrongDigitIndices.has(index),
+    isCelebrating: grid.celebratingIndices.has(index),
+    isAnimatedMistake: grid.animatedMistakeIndex === index,
+    isHintFlash: grid.hintedCellIndex === index || (grid.flashedCellIndices?.has(index) ?? false),
+    isCoachOutline,
+    isCoachElim: !isCoachOutline && grid.coachElimIndices.has(index),
+    showPencilMark: grid.pencilActive && isSelected && !isGiven,
+    notes: notesForCell(grid.notes, index),
+    digitDisplay: cellDisplayValue(grid.currentGrid, index),
   };
+}
+
+export function SudokuGrid(props: SudokuGridProps) {
+  const grid = resolveGridProps(props);
+  const { notePaintEnabled, onSelectCell, onPaintCell } = grid;
+  const pointer = useNotePaintPointer({ notePaintEnabled, onSelectCell, onPaintCell });
+  const highlights = boardHighlights(grid);
 
   return (
     <div
       className={cn(
         "sudoku-grid-frame",
-        pencilActive && "sudoku-grid-frame-pencil-mode",
+        grid.pencilActive && "sudoku-grid-frame-pencil-mode",
         notePaintEnabled && "sudoku-grid-frame-note-paint",
       )}
     >
@@ -148,15 +152,15 @@ export function SudokuGrid({
           <SudokuGridCell
             key={index}
             index={index}
-            state={cellState(index)}
-            selectedIndex={selectedIndex}
+            state={cellStateAt(grid, highlights, index)}
+            selectedIndex={grid.selectedIndex}
             focusDigit={highlights.focusDigit}
             onSelectCell={onSelectCell}
-            onDigit={onDigit}
-            onClear={onClear}
+            onDigit={grid.onDigit}
+            onClear={grid.onClear}
           />
         ))}
-        {coachHouses.map((house) => (
+        {grid.coachHouses.map((house) => (
           <div
             key={`${house.kind}-${house.index}`}
             className="sudoku-grid-coach-house-ring"

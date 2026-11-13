@@ -1,11 +1,6 @@
 import type { GameHistoryItem } from "@/api/types";
-import { GamesPageControls } from "@/components/GamesPageControls";
-import { FindGameForm, GamesFilters, HistoryItemButton } from "@/components/GamesHistorySections";
-import {
-  GAMES_PAGE_SIZE,
-  type GamesDifficultyFilter,
-  type GamesStatusFilter,
-} from "@/hooks/usePvpHistory";
+import { FindGameForm, GamesFilters, GamesLedger } from "@/components/GamesHistorySections";
+import type { GamesDifficultyFilter, GamesStatusFilter } from "@/hooks/usePvpHistory";
 
 type GamesHistoryProps = {
   history: GameHistoryItem[] | null;
@@ -44,10 +39,6 @@ export function GamesHistory({
   onFindCodeChange,
   onFindSubmit,
 }: GamesHistoryProps) {
-  const showInitialLoading = loading && history === null;
-  const historyPageCount = Math.max(1, Math.ceil(historyTotal / GAMES_PAGE_SIZE));
-  const filtersActive = difficultyFilter !== "all" || statusFilter !== "all";
-
   return (
     <>
       <GamesFilters
@@ -56,49 +47,16 @@ export function GamesHistory({
         onDifficultyChange={onDifficultyChange}
         onStatusChange={onStatusChange}
       />
-      <div className="gazette-stats-ledger gazette-stats-games-ledger">
-        {showInitialLoading && (
-          <p className="py-10 text-center font-display text-lg italic text-muted-foreground">
-            Loading games…
-          </p>
-        )}
-        {!showInitialLoading && history && history.length === 0 && (
-          <p className="py-10 text-center text-sm text-muted-foreground">
-            {filtersActive
-              ? "No games match these filters."
-              : "No games yet. Start one from the home screen."}
-          </p>
-        )}
-        {history && history.length > 0 && (
-          <div
-            className={
-              loading
-                ? "gazette-stats-ledger-body gazette-stats-ledger-refreshing"
-                : "gazette-stats-ledger-body"
-            }
-          >
-            <section className="gazette-stats-ledger-block gazette-stats-games-block">
-              <ul className="gazette-stats-games-list">
-                {history.map((item) => (
-                  <li key={item.id}>
-                    <HistoryItemButton
-                      item={item}
-                      reviewBusy={reviewBusy}
-                      onClick={onHistoryItemClick}
-                    />
-                  </li>
-                ))}
-              </ul>
-            </section>
-            <GamesPageControls
-              page={historyPage}
-              pageCount={historyTotal === 0 ? 0 : historyPageCount}
-              disabled={loading || reviewBusy}
-              onPageChange={onPageChange}
-            />
-          </div>
-        )}
-      </div>
+      <GamesLedger
+        history={history}
+        historyTotal={historyTotal}
+        historyPage={historyPage}
+        filtersActive={difficultyFilter !== "all" || statusFilter !== "all"}
+        loading={loading}
+        reviewBusy={reviewBusy}
+        onPageChange={onPageChange}
+        onHistoryItemClick={onHistoryItemClick}
+      />
       <FindGameForm
         findCode={findCode}
         findBusy={findBusy}

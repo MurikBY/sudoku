@@ -1,5 +1,10 @@
 import type { GameHistoryItem } from "@/api/types";
-import type { GamesDifficultyFilter, GamesStatusFilter } from "@/hooks/usePvpHistory";
+import { GamesPageControls } from "@/components/GamesPageControls";
+import {
+  GAMES_PAGE_SIZE,
+  type GamesDifficultyFilter,
+  type GamesStatusFilter,
+} from "@/hooks/usePvpHistory";
 import { formatElapsedSeconds } from "@/lib/format/formatElapsedSeconds";
 import { formatPartyStartedAt } from "@/lib/format/formatPartyLobbyName";
 
@@ -163,7 +168,7 @@ type HistoryItemButtonProps = {
   onClick: (item: GameHistoryItem) => void;
 };
 
-export function HistoryItemButton({ item, reviewBusy, onClick }: HistoryItemButtonProps) {
+function HistoryItemButton({ item, reviewBusy, onClick }: HistoryItemButtonProps) {
   const isClickable = !item.is_party || Boolean(item.party_id);
   return (
     <button
@@ -241,5 +246,75 @@ export function FindGameForm({
         {findError && <p className="gazette-stats-find-game-error">{findError}</p>}
       </form>
     </footer>
+  );
+}
+
+type GamesLedgerProps = {
+  history: GameHistoryItem[] | null;
+  historyTotal: number;
+  historyPage: number;
+  filtersActive: boolean;
+  loading: boolean;
+  reviewBusy: boolean;
+  onPageChange: (nextPage: number) => void;
+  onHistoryItemClick: (item: GameHistoryItem) => void;
+};
+
+export function GamesLedger({
+  history,
+  historyTotal,
+  historyPage,
+  filtersActive,
+  loading,
+  reviewBusy,
+  onPageChange,
+  onHistoryItemClick,
+}: GamesLedgerProps) {
+  const showInitialLoading = loading && history === null;
+  const historyPageCount = Math.max(1, Math.ceil(historyTotal / GAMES_PAGE_SIZE));
+  return (
+    <div className="gazette-stats-ledger gazette-stats-games-ledger">
+      {showInitialLoading && (
+        <p className="py-10 text-center font-display text-lg italic text-muted-foreground">
+          Loading games…
+        </p>
+      )}
+      {!showInitialLoading && history && history.length === 0 && (
+        <p className="py-10 text-center text-sm text-muted-foreground">
+          {filtersActive
+            ? "No games match these filters."
+            : "No games yet. Start one from the home screen."}
+        </p>
+      )}
+      {history && history.length > 0 && (
+        <div
+          className={
+            loading
+              ? "gazette-stats-ledger-body gazette-stats-ledger-refreshing"
+              : "gazette-stats-ledger-body"
+          }
+        >
+          <section className="gazette-stats-ledger-block gazette-stats-games-block">
+            <ul className="gazette-stats-games-list">
+              {history.map((item) => (
+                <li key={item.id}>
+                  <HistoryItemButton
+                    item={item}
+                    reviewBusy={reviewBusy}
+                    onClick={onHistoryItemClick}
+                  />
+                </li>
+              ))}
+            </ul>
+          </section>
+          <GamesPageControls
+            page={historyPage}
+            pageCount={historyTotal === 0 ? 0 : historyPageCount}
+            disabled={loading || reviewBusy}
+            onPageChange={onPageChange}
+          />
+        </div>
+      )}
+    </div>
   );
 }

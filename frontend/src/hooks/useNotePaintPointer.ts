@@ -29,6 +29,33 @@ function cellIndexFromPoint(clientX: number, clientY: number): number | null {
   return index;
 }
 
+function startsStroke(event: GridPointerEvent): boolean {
+  if (!event.isPrimary) {
+    return false;
+  }
+  return event.pointerType !== "mouse" || event.button === 0;
+}
+
+// Marks the cell visited and returns the cells to paint, in order. The first move
+// over a new cell also paints the cell the stroke started on.
+function cellsToPaintOnMove(stroke: NotePaintStroke, index: number): number[] {
+  if (stroke.visited.has(index)) {
+    return [];
+  }
+  stroke.visited.add(index);
+  const cells: number[] = [];
+  if (!stroke.painted) {
+    stroke.painted = true;
+    if (stroke.startIndex !== null) {
+      cells.push(stroke.startIndex);
+    }
+  }
+  if (index !== stroke.startIndex) {
+    cells.push(index);
+  }
+  return cells;
+}
+
 function releaseCapture(event: GridPointerEvent) {
   if (event.currentTarget.hasPointerCapture(event.pointerId)) {
     event.currentTarget.releasePointerCapture(event.pointerId);
@@ -70,10 +97,7 @@ export function useNotePaintPointer({
   };
 
   const onPointerDown = (event: GridPointerEvent) => {
-    if (!notePaintEnabled || !event.isPrimary) {
-      return;
-    }
-    if (event.pointerType === "mouse" && event.button !== 0) {
+    if (!notePaintEnabled || !startsStroke(event)) {
       return;
     }
     const index = cellIndexFromPoint(event.clientX, event.clientY);
@@ -93,19 +117,10 @@ export function useNotePaintPointer({
       return;
     }
     const index = cellIndexFromPoint(event.clientX, event.clientY);
-    if (index === null || stroke.visited.has(index)) {
+    if (index === null) {
       return;
     }
-    stroke.visited.add(index);
-    if (!stroke.painted) {
-      stroke.painted = true;
-      if (stroke.startIndex !== null) {
-        paintCell(stroke.startIndex);
-      }
-    }
-    if (index !== stroke.startIndex) {
-      paintCell(index);
-    }
+    cellsToPaintOnMove(stroke, index).forEach(paintCell);
   };
 
   const onPointerUp = (event: GridPointerEvent) => {
