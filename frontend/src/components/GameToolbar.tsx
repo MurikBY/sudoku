@@ -29,23 +29,7 @@ export function GameToolbar({
   stickyDigit,
   pencilActive,
 }: GameToolbarProps) {
-  const [modeHint, setModeHint] = useState<ToolbarModeHint | null>(null);
-  const shownHint = visibleToolbarModeHint(modeHint, stickyDigit, pencilActive);
-  if (modeHint !== null && shownHint === null) {
-    setModeHint(null);
-  }
-
-  useEffect(() => {
-    if (shownHint === null) {
-      return;
-    }
-    const timeoutId = window.setTimeout(() => setModeHint(null), TOOLBAR_MODE_HINT_MS);
-    return () => window.clearTimeout(timeoutId);
-  }, [shownHint]);
-
-  function toggleModeHint(nextHint: ToolbarModeHint) {
-    setModeHint((current) => (current === nextHint ? null : nextHint));
-  }
+  const { shownHint, toggleModeHint } = useToolbarModeHint(stickyDigit, pencilActive);
 
   if (mode.kind === "analysis") {
     return (
@@ -74,27 +58,13 @@ export function GameToolbar({
         <span className="gazette-toolbar-dot gazette-toolbar-dot-mode" aria-hidden="true">
           ·
         </span>
-        {mode.kind === "solo" && (
-          <LabeledMetric
-            layout="inline"
-            label="time"
-            value={isPaused ? `${formattedElapsed} ‖` : formattedElapsed}
-          />
-        )}
-        {showMistakes && (
-          <>
-            {mode.kind === "solo" && (
-              <span className="gazette-toolbar-dot" aria-hidden="true">
-                ·
-              </span>
-            )}
-            <LabeledMetric layout="inline" label="mistakes" value={mistakesCount} />
-          </>
-        )}
-        <span className="gazette-toolbar-dot" aria-hidden="true">
-          ·
-        </span>
-        <LabeledMetric layout="inline" label="hints" value={hintsCount} />
+        <ToolbarMetrics
+          showTime={mode.kind === "solo"}
+          time={isPaused ? `${formattedElapsed} ‖` : formattedElapsed}
+          showMistakes={showMistakes}
+          mistakesCount={mistakesCount}
+          hintsCount={hintsCount}
+        />
         <span className="gazette-toolbar-dot gazette-toolbar-dot-mode" aria-hidden="true">
           ·
         </span>
@@ -121,6 +91,67 @@ export function GameToolbar({
         </p>
       )}
     </div>
+  );
+}
+
+// A tapped mode badge explains itself for a moment, and the hint goes when its mode ends.
+function useToolbarModeHint(stickyDigit: number | null, pencilActive: boolean) {
+  const [modeHint, setModeHint] = useState<ToolbarModeHint | null>(null);
+  const shownHint = visibleToolbarModeHint(modeHint, stickyDigit, pencilActive);
+  if (modeHint !== null && shownHint === null) {
+    setModeHint(null);
+  }
+
+  useEffect(() => {
+    if (shownHint === null) {
+      return;
+    }
+    const timeoutId = window.setTimeout(() => setModeHint(null), TOOLBAR_MODE_HINT_MS);
+    return () => window.clearTimeout(timeoutId);
+  }, [shownHint]);
+
+  function toggleModeHint(nextHint: ToolbarModeHint) {
+    setModeHint((current) => (current === nextHint ? null : nextHint));
+  }
+
+  return { shownHint, toggleModeHint };
+}
+
+function ToolbarDot() {
+  return (
+    <span className="gazette-toolbar-dot" aria-hidden="true">
+      ·
+    </span>
+  );
+}
+
+type ToolbarMetricsProps = {
+  showTime: boolean;
+  time: string;
+  showMistakes: boolean;
+  mistakesCount: number;
+  hintsCount: number;
+};
+
+function ToolbarMetrics({
+  showTime,
+  time,
+  showMistakes,
+  mistakesCount,
+  hintsCount,
+}: ToolbarMetricsProps) {
+  return (
+    <>
+      {showTime && <LabeledMetric layout="inline" label="time" value={time} />}
+      {showMistakes && (
+        <>
+          {showTime && <ToolbarDot />}
+          <LabeledMetric layout="inline" label="mistakes" value={mistakesCount} />
+        </>
+      )}
+      <ToolbarDot />
+      <LabeledMetric layout="inline" label="hints" value={hintsCount} />
+    </>
   );
 }
 
