@@ -23,7 +23,7 @@ Starting a game or a party takes a ready puzzle from `puzzle_pool`. The API does
 
 `App` holds one `ScreenState`, reduced by `screenReducer` in `hooks/screenState.ts`. The play screen is one variant of that union.
 
-Board changes go through `enqueueBoardAction` in `hooks/useGame.ts`. The calls run one after another. While one is running, both the move and the notes count as pending.
+Board changes go through `enqueueBoardAction` in `hooks/useBoardActionQueue.ts`. The calls run one after another. While one is running, both the move and the notes count as pending.
 
 ## System context
 

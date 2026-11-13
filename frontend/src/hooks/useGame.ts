@@ -1,8 +1,10 @@
-import { useCallback, useEffect, useReducer, useRef, useState } from "react";
+import { useCallback, useReducer, useState } from "react";
 
 import type { Game } from "@/api/types";
 import { boardReducer, initialBoardState } from "@/hooks/boardState";
+import { useBoardActionQueue } from "@/hooks/useBoardActionQueue";
 import { useBoardMoves } from "@/hooks/useBoardMoves";
+import { useLatestBoardRefs } from "@/hooks/useLatestBoardRefs";
 import { useNotes } from "@/hooks/useNotes";
 import { useUndo } from "@/hooks/useUndo";
 
@@ -14,19 +16,10 @@ type UseGameOptions = {
 
 export function useGame({ initialGame, onGameStateChanged, onCellsFlash }: UseGameOptions) {
   const [board, dispatch] = useReducer(boardReducer, initialGame, initialBoardState);
-  const [isMovePending, setIsMovePending] = useState(false);
   const [isHintPending, setIsHintPending] = useState(false);
-  const [isNotesPending, setIsNotesPending] = useState(false);
   const [isUndoPending, setIsUndoPending] = useState(false);
-  const gameRef = useRef(board.game);
-  const selectedIndexRef = useRef(board.selectedIndex);
-  const boardActionChainRef = useRef(Promise.resolve());
-  const boardActionPendingCountRef = useRef(0);
-
-  useEffect(() => {
-    gameRef.current = board.game;
-    selectedIndexRef.current = board.selectedIndex;
-  }, [board.game, board.selectedIndex]);
+  const { enqueueBoardAction, isBoardActionPending } = useBoardActionQueue();
+  const { gameRef, selectedIndexRef } = useLatestBoardRefs(board.game, board.selectedIndex);
 
   const notifyGameStateChanged = useCallback(() => {
     onGameStateChanged?.();
@@ -41,29 +34,6 @@ export function useGame({ initialGame, onGameStateChanged, onCellsFlash }: UseGa
     },
     [onCellsFlash],
   );
-
-  const enqueueBoardAction = useCallback(<T>(action: () => Promise<T>): Promise<T> => {
-    const run = async () => {
-      boardActionPendingCountRef.current += 1;
-      setIsMovePending(true);
-      setIsNotesPending(true);
-      try {
-        return await action();
-      } finally {
-        boardActionPendingCountRef.current -= 1;
-        if (boardActionPendingCountRef.current === 0) {
-          setIsMovePending(false);
-          setIsNotesPending(false);
-        }
-      }
-    };
-    const queued = boardActionChainRef.current.then(run, run);
-    boardActionChainRef.current = queued.then(
-      () => undefined,
-      () => undefined,
-    );
-    return queued;
-  }, []);
 
   const { applyMove, applyCoachHint, finishCompletedGame } = useBoardMoves({
     enqueueBoardAction,
@@ -110,9 +80,9 @@ export function useGame({ initialGame, onGameStateChanged, onCellsFlash }: UseGa
       canUndo: board.game.undo_count > 0,
     },
     pending: {
-      isMovePending,
+      isMovePending: isBoardActionPending,
       isHintPending,
-      isNotesPending,
+      isNotesPending: isBoardActionPending,
       isUndoPending,
     },
     actions: {
