@@ -1,56 +1,18 @@
-import { useCallback, useState, type PointerEvent as ReactPointerEvent } from "react";
+import { useCallback } from "react";
 
-import { type Game, type HintResponse } from "@/api/types";
-import { useBoardInput } from "@/hooks/useBoardInput";
+import type {
+  ActionSlice,
+  BoardSlice,
+  PendingSlice,
+  PlaySlice,
+  TimerSlice,
+} from "@/hooks/playBoardSessionTypes";
+import { useBoardBackgroundClear } from "@/hooks/useBoardBackgroundClear";
+import { useBoardControls } from "@/hooks/useBoardControls";
+import { useLobbyPanelOpen } from "@/hooks/useLobbyPanelOpen";
 import { usePlayCoach } from "@/hooks/usePlayCoach";
 import { useStickyDigit } from "@/hooks/useStickyDigit";
-import { boardView } from "@/lib/play/boardView";
 import { type GameAssists } from "@/lib/play/gameSettings";
-import { type PlayMode } from "@/lib/play/playMode";
-
-type BoardSlice = {
-  game: Game;
-  selectedIndex: number | null;
-  isPencilMode: boolean;
-  conflictIndices: ReadonlySet<number>;
-  wrongDigitIndices: ReadonlySet<number>;
-  canUndo: boolean;
-};
-
-type PendingSlice = {
-  isMovePending: boolean;
-  isHintPending: boolean;
-  isNotesPending: boolean;
-  isUndoPending: boolean;
-};
-
-type ActionSlice = {
-  selectCell: (index: number | null) => void;
-  togglePencilMode: () => void;
-  applyMove: (
-    value: number,
-    elapsedSeconds: number,
-    cellIndex?: number,
-  ) => Promise<(Game & { is_mistake?: boolean }) | null>;
-  applyCoachHint: (elapsedSeconds: number) => Promise<HintResponse | null>;
-  toggleNote: (digit: number, elapsedSeconds: number, cellIndex?: number) => Promise<Game | null>;
-  addNote: (digit: number, elapsedSeconds: number, cellIndex: number) => Promise<Game | null>;
-  clearNotes: (elapsedSeconds: number) => Promise<Game | null>;
-  undoLastMove: (elapsedSeconds: number) => Promise<Game | null>;
-};
-
-type PlaySlice = {
-  isPlaying: boolean;
-  showLessonSuccess: boolean;
-  isPaused: boolean;
-  onResume: () => void;
-  mode: PlayMode;
-};
-
-type TimerSlice = {
-  getElapsedSeconds: () => number;
-  setElapsedFromServer: (elapsedSeconds: number) => void;
-};
 
 type UsePlayBoardSessionArgs = {
   board: BoardSlice;
@@ -73,23 +35,10 @@ export function usePlayBoardSession({
 }: UsePlayBoardSessionArgs) {
   const { game, selectedIndex, isPencilMode, conflictIndices, wrongDigitIndices, canUndo } = board;
   const { isMovePending, isHintPending, isNotesPending, isUndoPending } = pending;
-  const {
-    selectCell,
-    togglePencilMode,
-    applyMove,
-    applyCoachHint,
-    toggleNote,
-    addNote,
-    clearNotes,
-    undoLastMove,
-  } = actions;
+  const { selectCell, togglePencilMode, addNote } = actions;
   const { isPlaying, showLessonSuccess, isPaused, onResume, mode } = play;
   const { getElapsedSeconds, setElapsedFromServer } = timer;
-  const [lobbyOpen, setLobbyOpen] = useState(false);
-  const isPartyGame = game.party_id !== null;
-  if (lobbyOpen && (!isPartyGame || mode.kind !== "solo")) {
-    setLobbyOpen(false);
-  }
+  const { lobbyOpen, setLobbyOpen } = useLobbyPanelOpen(game.party_id !== null, mode);
 
   const resumeIfPaused = useCallback(() => {
     if (isPaused) {
@@ -97,15 +46,15 @@ export function usePlayBoardSession({
     }
   }, [isPaused, onResume]);
 
-  const { coachEpisode, coachOpen, dismissCoachCard, handleStrengthenHint, handleHint } =
-    usePlayCoach({
-      game,
-      applyCoachHint,
-      getElapsedSeconds,
-      setElapsedFromServer,
-      resumeIfPaused,
-      selectCell,
-    });
+  const coach = usePlayCoach({
+    game,
+    applyCoachHint: actions.applyCoachHint,
+    getElapsedSeconds,
+    setElapsedFromServer,
+    resumeIfPaused,
+    selectCell,
+  });
+  const { dismissCoachCard } = coach;
 
   const prepareGesture = useCallback(() => {
     dismissCoachCard();
@@ -128,47 +77,15 @@ export function usePlayBoardSession({
     selectCell,
   });
 
-  const view = boardView({
-    puzzle: game.puzzle,
-    currentGrid: game.current_grid,
-    notes: game.notes,
-    dimCompletedDigits: assists.dimCompletedDigits,
-    mistakeFeedback: assists.mistakeFeedback,
-    stickyAssist: assists.stickyDigit,
-    isPlaying,
-    showLessonSuccess,
-    selectedIndex,
-    isPencilMode,
-    conflictIndices,
-    wrongDigitIndices,
-    stickyDigit: sticky.stickyDigit,
-  });
-
-  const input = useBoardInput({
-    gates: {
-      canUsePad: view.canUsePad,
-      canClear: view.canClear,
-      padCompletedDigits: view.padCompletedDigits,
-    },
-    selection: { selectedIndex, isPencilMode },
-    cells: {
-      puzzle: game.puzzle,
-      currentGrid: game.current_grid,
-      notes: game.notes,
-    },
-    mistakes: {
-      feedback: assists.mistakeFeedback,
-      wrongDigitIndices,
-      trigger: triggerMistakeFeedback,
-    },
-    commands: { applyMove, toggleNote, clearNotes, undoLastMove, selectCell },
-    sticky: {
-      digit: sticky.stickyDigit,
-      digitRef: sticky.digitRef,
-      clear: sticky.clearStickyDigit,
-      assist: assists.stickyDigit,
-    },
-    elapsed: { getElapsedSeconds, setElapsedFromServer },
+  const controls = useBoardControls({
+    game,
+    board: { selectedIndex, isPencilMode, conflictIndices, wrongDigitIndices },
+    assists,
+    play: { isPlaying, showLessonSuccess },
+    sticky,
+    actions,
+    timer,
+    triggerMistakeFeedback,
     prepareGesture,
   });
 
@@ -178,55 +95,20 @@ export function usePlayBoardSession({
     togglePencilMode();
   }, [dismissCoachCard, resumeIfPaused, togglePencilMode]);
 
-  function clearBoardSelection() {
-    if (selectedIndex === null) {
-      return;
-    }
-    selectCell(null);
-  }
-
-  function handleBoardBackgroundPointerDown(event: ReactPointerEvent<HTMLDivElement>) {
-    if (!event.isPrimary) {
-      return;
-    }
-    if (event.pointerType === "mouse" && event.button !== 0) {
-      return;
-    }
-    dismissCoachCard();
-    clearBoardSelection();
-  }
-
-  function stopBoardClearPropagation(event: ReactPointerEvent<HTMLDivElement>) {
-    event.stopPropagation();
-  }
+  const background = useBoardBackgroundClear({ selectedIndex, selectCell, dismissCoachCard });
 
   return {
     lobbyOpen,
     setLobbyOpen,
     stickyDigit: sticky.stickyDigit,
-    coachEpisode,
-    coachOpen,
     isBusy: isMovePending || isHintPending || isNotesPending || isUndoPending,
     isPencilMode,
-    canClear: view.canClear,
-    canHint: view.canHint,
     canUndo,
-    activeDigit: view.activeDigit,
-    noteDigits: view.noteDigits,
-    visibleWrongDigitIndices: view.visibleWrongDigitIndices,
-    padCompletedDigits: view.padCompletedDigits,
-    notePaintEnabled: view.notePaintEnabled,
-    dismissCoachCard,
-    handleStrengthenHint,
-    handleHint,
-    handleUndo: input.handleUndo,
     handleTogglePencil,
-    handlePick: input.handlePick,
     handleStickyDigit: sticky.handleStickyDigit,
     handlePaintNoteCell: sticky.handlePaintNoteCell,
-    handleSelectCell: input.handleSelectCell,
-    handleBoardBackgroundPointerDown,
-    stopBoardClearPropagation,
-    handleClear: input.handleClear,
+    ...coach,
+    ...controls,
+    ...background,
   };
 }

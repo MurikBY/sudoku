@@ -108,7 +108,6 @@ export function usePlayCoach({
   return {
     coachEpisode,
     coachOpen,
-    setCoachOpen,
     dismissCoachCard,
     handleStrengthenHint,
     handleHint,
