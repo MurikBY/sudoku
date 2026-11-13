@@ -7,7 +7,7 @@ services:
       TELEGRAM_USE_POLLING: "true"
 
   frontend:
-    image: node:22-alpine
+    image: node:24-alpine
     pull_policy: always
     build: !reset null
     working_dir: /app
