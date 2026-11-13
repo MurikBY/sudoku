@@ -1,5 +1,4 @@
-import { useRef } from "react";
-
+import { useStickyLongPress } from "@/hooks/useStickyLongPress";
 import { cn } from "@/lib/classNames";
 
 type NumberPadProps = {
@@ -19,7 +18,61 @@ const PAD_ROWS = [
   [6, 7, 8, 9],
 ] as const;
 
-const STICKY_LONG_PRESS_MS = 420;
+type PadKeyProps = {
+  digit: number;
+  disabled: boolean;
+  canStick: boolean;
+  isSticky: boolean;
+  isActive: boolean;
+  isCompleted: boolean;
+  longPress: ReturnType<typeof useStickyLongPress>;
+  onPick: (digit: number) => void;
+};
+
+function PadKey({
+  digit,
+  disabled,
+  canStick,
+  isSticky,
+  isActive,
+  isCompleted,
+  longPress,
+  onPick,
+}: PadKeyProps) {
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      className={cn(
+        "gazette-pad-key",
+        isSticky && "gazette-pad-key-sticky",
+        !isSticky && isActive && "gazette-pad-key-active",
+        isCompleted && "gazette-pad-key-completed",
+      )}
+      aria-pressed={isSticky}
+      onPointerDown={(event) => {
+        if (disabled || event.button !== 0) {
+          return;
+        }
+        longPress.startPress(digit, canStick);
+      }}
+      onPointerUp={longPress.clearLongPress}
+      onPointerLeave={longPress.clearLongPress}
+      onPointerCancel={longPress.clearLongPress}
+      onContextMenu={(event) => {
+        event.preventDefault();
+      }}
+      onClick={() => {
+        if (longPress.consumeSuppressedClick() || disabled) {
+          return;
+        }
+        onPick(digit);
+      }}
+    >
+      {digit}
+    </button>
+  );
+}
 
 export function NumberPad({
   onPick,
@@ -32,33 +85,7 @@ export function NumberPad({
   completedDigits = new Set(),
   pencilActive = false,
 }: NumberPadProps) {
-  const longPressTimerRef = useRef<number | null>(null);
-  const longPressDigitRef = useRef<number | null>(null);
-  const suppressClickRef = useRef(false);
-
-  function clearLongPressTimer() {
-    if (longPressTimerRef.current !== null) {
-      window.clearTimeout(longPressTimerRef.current);
-      longPressTimerRef.current = null;
-    }
-    longPressDigitRef.current = null;
-  }
-
-  function startLongPress(digit: number, canStick: boolean) {
-    clearLongPressTimer();
-    if (!canStick || !onStickyDigit) {
-      return;
-    }
-    longPressDigitRef.current = digit;
-    longPressTimerRef.current = window.setTimeout(() => {
-      longPressTimerRef.current = null;
-      if (longPressDigitRef.current !== digit) {
-        return;
-      }
-      suppressClickRef.current = true;
-      onStickyDigit(digit);
-    }, STICKY_LONG_PRESS_MS);
-  }
+  const longPress = useStickyLongPress(onStickyDigit);
 
   return (
     <div className={cn("gazette-pad", pencilActive && "gazette-pad-pencil-mode")}>
@@ -73,48 +100,18 @@ export function NumberPad({
           {row.map((digit) => {
             const isCompleted = completedDigits.has(digit);
             const isKeyDisabled = Boolean(disabled || isCompleted);
-            const canStick = stickyEnabled && !isKeyDisabled;
-            const isSticky = stickyDigit === digit;
-            const isActive = pencilActive ? noteDigits.has(digit) : activeDigit === digit;
-
             return (
-              <button
+              <PadKey
                 key={digit}
-                type="button"
+                digit={digit}
                 disabled={isKeyDisabled}
-                className={cn(
-                  "gazette-pad-key",
-                  isSticky && "gazette-pad-key-sticky",
-                  !isSticky && isActive && "gazette-pad-key-active",
-                  isCompleted && "gazette-pad-key-completed",
-                )}
-                aria-pressed={isSticky}
-                onPointerDown={(event) => {
-                  if (isKeyDisabled || event.button !== 0) {
-                    return;
-                  }
-                  suppressClickRef.current = false;
-                  startLongPress(digit, canStick);
-                }}
-                onPointerUp={clearLongPressTimer}
-                onPointerLeave={clearLongPressTimer}
-                onPointerCancel={clearLongPressTimer}
-                onContextMenu={(event) => {
-                  event.preventDefault();
-                }}
-                onClick={() => {
-                  if (suppressClickRef.current) {
-                    suppressClickRef.current = false;
-                    return;
-                  }
-                  if (isKeyDisabled) {
-                    return;
-                  }
-                  onPick(digit);
-                }}
-              >
-                {digit}
-              </button>
+                canStick={stickyEnabled && !isKeyDisabled}
+                isSticky={stickyDigit === digit}
+                isActive={pencilActive ? noteDigits.has(digit) : activeDigit === digit}
+                isCompleted={isCompleted}
+                longPress={longPress}
+                onPick={onPick}
+              />
             );
           })}
         </div>
