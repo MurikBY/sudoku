@@ -78,122 +78,120 @@ function NotesPencilMark() {
   );
 }
 
+function PeersPreview() {
+  return (
+    <MiniGrid
+      cellClassName={(index) => {
+        if (index === 4) {
+          return "guide-preview-cell-selected";
+        }
+        if ([1, 3, 5, 7].includes(index)) {
+          return "guide-preview-cell-peer";
+        }
+        return undefined;
+      }}
+    />
+  );
+}
+
+const SAME_DIGIT_CELLS: (string | null)[] = ["5", "2", null, "8", "5", "1", "3", "9", "5"];
+
+function SameDigitPreview() {
+  return (
+    <MiniGrid
+      cellClassName={(index) => {
+        if (index === 4) {
+          return "guide-preview-cell-selected guide-preview-cell-same";
+        }
+        if (index === 0 || index === 8) {
+          return "guide-preview-cell-same";
+        }
+        if (index === 2) {
+          return "guide-preview-cell-same-note";
+        }
+        return undefined;
+      }}
+      cellContent={(index) => {
+        if (index === 2) {
+          return <PencilNotes digits={[5, 7]} />;
+        }
+        const digit = SAME_DIGIT_CELLS[index];
+        if (digit == null) {
+          return null;
+        }
+        return <span className="guide-preview-cell-digit">{digit}</span>;
+      }}
+    />
+  );
+}
+
+const MISTAKE_CELLS: (string | null)[] = ["7", null, "1", null, "7", "2", "3", null, null];
+
+function MistakePreview() {
+  return (
+    <MiniGrid
+      cellClassName={(index) => (index === 4 ? "guide-preview-cell-wrong" : undefined)}
+      cellContent={(index) => {
+        const digit = MISTAKE_CELLS[index];
+        if (digit == null) {
+          return null;
+        }
+        return (
+          <span
+            className={cn(
+              "guide-preview-cell-digit",
+              index === 4 && "guide-preview-cell-digit-wrong",
+            )}
+          >
+            {digit}
+          </span>
+        );
+      }}
+    />
+  );
+}
+
+function UnitCompletePreview() {
+  return (
+    <MiniGrid
+      className="guide-preview-grid-flash"
+      cellClassName={(index) => (index < 3 ? "guide-preview-cell-flash" : undefined)}
+      cellContent={(index) => {
+        if (index > 2) {
+          return null;
+        }
+        return <span className="guide-preview-cell-digit">{String(index + 1)}</span>;
+      }}
+    />
+  );
+}
+
+function AutoClearPreview() {
+  return (
+    <div className="guide-preview-notes" aria-hidden="true">
+      <span className="guide-preview-notes-cell">
+        <PencilNotes digits={[5, 7]} goneDigits={[2]} />
+        <NotesPencilMark />
+      </span>
+      <span className="guide-preview-notes-arrow">→</span>
+      <span className="guide-preview-notes-cell">
+        <PencilNotes digits={[5, 7]} />
+        <NotesPencilMark />
+      </span>
+    </div>
+  );
+}
+
+const PREVIEWS: Record<GuideAssistPreviewId, () => ReactNode> = {
+  highlightPeers: () => <PeersPreview />,
+  highlightSameDigit: () => <SameDigitPreview />,
+  mistakeFeedback: () => <MistakePreview />,
+  dimCompletedDigits: () => <MiniPad dimDigit={3} />,
+  unitCompleteAnimation: () => <UnitCompletePreview />,
+  autoClearNotes: () => <AutoClearPreview />,
+  stickyDigit: () => <MiniPad stickyDigit={4} />,
+};
+
 export function GuideAssistPreview({ previewId }: GuideAssistPreviewProps) {
-  if (previewId === "highlightPeers") {
-    return (
-      <MiniGrid
-        cellClassName={(index) => {
-          if (index === 4) {
-            return "guide-preview-cell-selected";
-          }
-          if ([1, 3, 5, 7].includes(index)) {
-            return "guide-preview-cell-peer";
-          }
-          return undefined;
-        }}
-      />
-    );
-  }
-
-  if (previewId === "highlightSameDigit") {
-    const digits: (string | null)[] = ["5", "2", null, "8", "5", "1", "3", "9", "5"];
-    return (
-      <MiniGrid
-        cellClassName={(index) => {
-          if (index === 4) {
-            return "guide-preview-cell-selected guide-preview-cell-same";
-          }
-          if (index === 0 || index === 8) {
-            return "guide-preview-cell-same";
-          }
-          if (index === 2) {
-            return "guide-preview-cell-same-note";
-          }
-          return undefined;
-        }}
-        cellContent={(index) => {
-          if (index === 2) {
-            return <PencilNotes digits={[5, 7]} />;
-          }
-          const digit = digits[index];
-          if (digit == null) {
-            return null;
-          }
-          return <span className="guide-preview-cell-digit">{digit}</span>;
-        }}
-      />
-    );
-  }
-
-  if (previewId === "mistakeFeedback") {
-    const digits: (string | null)[] = ["7", null, "1", null, "7", "2", "3", null, null];
-    return (
-      <MiniGrid
-        cellClassName={(index) => {
-          if (index === 4) {
-            return "guide-preview-cell-wrong";
-          }
-          return undefined;
-        }}
-        cellContent={(index) => {
-          const digit = digits[index];
-          if (digit == null) {
-            return null;
-          }
-          return (
-            <span
-              className={cn(
-                "guide-preview-cell-digit",
-                index === 4 && "guide-preview-cell-digit-wrong",
-              )}
-            >
-              {digit}
-            </span>
-          );
-        }}
-      />
-    );
-  }
-
-  if (previewId === "dimCompletedDigits") {
-    return <MiniPad dimDigit={3} />;
-  }
-
-  if (previewId === "unitCompleteAnimation") {
-    return (
-      <MiniGrid
-        className="guide-preview-grid-flash"
-        cellClassName={(index) => {
-          if (index < 3) {
-            return "guide-preview-cell-flash";
-          }
-          return undefined;
-        }}
-        cellContent={(index) => {
-          if (index > 2) {
-            return null;
-          }
-          return <span className="guide-preview-cell-digit">{String(index + 1)}</span>;
-        }}
-      />
-    );
-  }
-
-  if (previewId === "autoClearNotes") {
-    return (
-      <div className="guide-preview-notes" aria-hidden="true">
-        <span className="guide-preview-notes-cell">
-          <PencilNotes digits={[5, 7]} goneDigits={[2]} />
-          <NotesPencilMark />
-        </span>
-        <span className="guide-preview-notes-arrow">→</span>
-        <span className="guide-preview-notes-cell">
-          <PencilNotes digits={[5, 7]} />
-          <NotesPencilMark />
-        </span>
-      </div>
-    );
-  }
-
-  return <MiniPad stickyDigit={4} />;
+  return PREVIEWS[previewId]();
 }
