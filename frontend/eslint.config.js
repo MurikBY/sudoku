@@ -26,7 +26,14 @@ export default tseslint.config(
       ],
       "react-hooks/set-state-in-effect": "error",
       "react-hooks/refs": "error",
+      // A long function usually mixes responsibilities; the backend enforces the same with ruff.
+      "max-lines-per-function": ["error", { max: 80, skipBlankLines: true, skipComments: true }],
     },
+  },
+  {
+    // A describe block is a list of cases, not one piece of logic.
+    files: ["**/*.test.{ts,tsx}"],
+    rules: { "max-lines-per-function": "off" },
   },
   {
     files: ["vite.config.ts", "vite.buildIdPlugin.ts", "vite.initialThemePlugin.ts"],

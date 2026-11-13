@@ -15,7 +15,7 @@ Backend layers: `api/` (routers, HTTP only) → `services/` (business logic) →
 
 ## Rules for this repository
 
-- Write short, single-purpose functions; extract reusable logic into helpers. Split files by responsibility: state apart from rendering, one feature per file.
+- Write short, single-purpose functions; extract reusable logic into helpers. Split files by responsibility: state apart from rendering, one feature per file. Lint enforces the length: ruff `max-statements` 25, and ESLint `max-lines-per-function` 80 without blank lines and comments. Tests and applied migrations are exempt.
 - No silent fallbacks when reading data. Missing or invalid values raise.
 - Config comes from environment variables and is validated at startup in `app/config.py`. Secrets live in `.env` only; `.env.example` is committed.
 - Every schema change is an Alembic migration. Never edit an applied migration. `tests/test_schema_matches_models.py` fails when the migrated schema and the models disagree.
