@@ -10,10 +10,10 @@ from app.background import drain
 from app.models.enums import Difficulty, GameStatus
 from app.models.game import Game
 from app.models.user import User
-from app.services.game_completion_notify import schedule_completion_notices
+from app.services.game_completion_notify import announce_completion
 from app.services.preferences_service import DEFAULT_ASSISTS
 from app.services.rating_notify import build_top10_drop_message
-from app.services.stats.clean_best import ejected_top10_user_id
+from app.services.stats.clean_best import completion_ranks, ejected_top10_user_id
 from app.services.top10_drop_cooldown import TOP10_DROP_COOLDOWN_SECONDS, Top10DropCooldown
 from app.services.user_reset_service import reset_user_play_data
 from app.services.user_upsert import upsert_telegram_user
@@ -66,6 +66,10 @@ async def _add_completed_game(
     return game
 
 
+async def _ejected(session: AsyncSession, game: Game) -> int | None:
+    return await ejected_top10_user_id(session, game, await completion_ranks(session, game))
+
+
 async def _seed_easy_top10(session: AsyncSession) -> None:
     for index in range(10):
         await _add_completed_game(
@@ -86,7 +90,7 @@ async def test_ejected_top10_when_new_player_enters(
             EASY_ELEVENTH_USER_ID,
             elapsed_seconds=50,
         )
-        assert await ejected_top10_user_id(session, entering) == EASY_TENTH_USER_ID
+        assert await _ejected(session, entering) == EASY_TENTH_USER_ID
 
 
 @pytest.mark.asyncio
@@ -101,7 +105,7 @@ async def test_ejected_top10_none_when_board_had_fewer_than_ten(
                 elapsed_seconds=100 + index * 10,
             )
         tenth = await _add_completed_game(session, EASY_TENTH_USER_ID, elapsed_seconds=50)
-        assert await ejected_top10_user_id(session, tenth) is None
+        assert await _ejected(session, tenth) is None
 
 
 @pytest.mark.asyncio
@@ -111,7 +115,7 @@ async def test_ejected_top10_none_when_existing_top10_improves(
     async with isolated_session_factory() as session:
         await _seed_easy_top10(session)
         improved = await _add_completed_game(session, 1001, elapsed_seconds=40)
-        assert await ejected_top10_user_id(session, improved) is None
+        assert await _ejected(session, improved) is None
 
 
 @pytest.mark.asyncio
@@ -130,7 +134,7 @@ async def test_ejected_top10_when_eleventh_moves_into_tenth(
             EASY_ELEVENTH_USER_ID,
             elapsed_seconds=105,
         )
-        assert await ejected_top10_user_id(session, entering) == EASY_TENTH_USER_ID
+        assert await _ejected(session, entering) == EASY_TENTH_USER_ID
 
 
 @pytest.mark.asyncio
@@ -157,9 +161,9 @@ async def test_ejected_top10_none_for_dirty_or_analysis(
             elapsed_seconds=30,
             is_lesson=True,
         )
-        assert await ejected_top10_user_id(session, dirty) is None
-        assert await ejected_top10_user_id(session, analysis) is None
-        assert await ejected_top10_user_id(session, lesson) is None
+        assert await _ejected(session, dirty) is None
+        assert await _ejected(session, analysis) is None
+        assert await _ejected(session, lesson) is None
 
 
 @pytest.mark.asyncio
@@ -174,7 +178,7 @@ async def test_ejected_top10_ignores_other_difficulty(
             difficulty=Difficulty.medium,
             elapsed_seconds=50,
         )
-        assert await ejected_top10_user_id(session, medium) is None
+        assert await _ejected(session, medium) is None
 
 
 class _RecordingBot:
@@ -194,7 +198,7 @@ async def test_reset_and_rewin_does_not_message_the_same_player_again(
         await _seed_easy_top10(session)
         for _attempt in range(3):
             win = await _add_completed_game(session, EASY_ELEVENTH_USER_ID, elapsed_seconds=50)
-            await schedule_completion_notices(cast(Bot, bot), session, win)
+            await announce_completion(cast(Bot, bot), session, win)
             await drain()
             attacker = await session.get(User, EASY_ELEVENTH_USER_ID)
             assert attacker is not None

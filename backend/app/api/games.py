@@ -36,7 +36,7 @@ from app.schemas.mappers import (
     taught_lesson_response,
     undo_result_to_response,
 )
-from app.services.game_completion_notify import schedule_completion_notices
+from app.services.game_completion_notify import announce_completion
 from app.services.games import analysis, creation, lessons, lifecycle, queries, review, undo
 from app.services.games.coach_hint import apply_coach_hint
 from app.services.games.moves import CellMove, apply_move
@@ -44,6 +44,7 @@ from app.services.games.notes import apply_notes
 from app.services.lesson_progress_service import progress_for_user
 from app.services.play_lock_service import require_play_lock_allows
 from app.services.puzzle_export import send_puzzle_export_to_chat
+from app.services.stats.clean_best import completion_recap
 
 router = APIRouter(prefix="/api/games", tags=["games"])
 
@@ -57,7 +58,7 @@ async def create_game(
 ) -> GameResponse:
     await require_play_lock_allows(session, current_user, x_play_lock_token)
     game = await creation.create_game(session, current_user, body.difficulty)
-    return await game_response(session, game)
+    return game_response(game, completion=None)
 
 
 @router.get("/resumable", response_model=GameResponse | None)
@@ -68,7 +69,7 @@ async def get_resumable_game(
     game = await queries.get_resumable_game(session, current_user.id)
     if game is None:
         return None
-    return await game_response(session, game)
+    return game_response(game, completion=None)
 
 
 @router.get("/history", response_model=GameHistoryResponse)
@@ -129,7 +130,7 @@ async def create_analysis_game(
         body.share_code,
         body.event_index,
     )
-    return await game_response(session, game)
+    return game_response(game, completion=None)
 
 
 @router.post("/lessons", response_model=GameResponse, status_code=201)
@@ -147,7 +148,7 @@ async def create_lesson_game(
         body.variant,
         body.exclude_position_id,
     )
-    return await game_response(session, game)
+    return game_response(game, completion=None)
 
 
 @router.get("/lesson-progress", response_model=LessonProgressResponse)
@@ -189,7 +190,7 @@ async def get_game(
     session: DbSession,
 ) -> GameResponse:
     game = await queries.get_game(session, current_user.id, game_id)
-    return await game_response(session, game)
+    return game_response(game, completion=await completion_recap(session, game))
 
 
 @router.patch("/{game_id}", status_code=204)
@@ -225,7 +226,7 @@ async def move_cell(
         ),
         body.elapsed_seconds,
     )
-    return await move_result_to_response(session, move_result)
+    return move_result_to_response(move_result)
 
 
 @router.put("/{game_id}/cells/{index}/notes", response_model=GameResponse)
@@ -244,7 +245,7 @@ async def set_cell_notes(
         body.digits,
         body.elapsed_seconds,
     )
-    return await game_response(session, game)
+    return game_response(game, completion=None)
 
 
 @router.post("/{game_id}/undo", response_model=UndoMoveResponse)
@@ -260,7 +261,7 @@ async def undo_last_move(
         game_id,
         body.elapsed_seconds,
     )
-    return await undo_result_to_response(session, undo_result)
+    return undo_result_to_response(undo_result)
 
 
 @router.post("/{game_id}/hint", response_model=HintResponse)
@@ -276,7 +277,7 @@ async def apply_hint(
         game_id,
         body.elapsed_seconds,
     )
-    return await hint_result_to_response(session, hint_result)
+    return hint_result_to_response(hint_result)
 
 
 @router.post("/{game_id}/complete", response_model=GameResponse)
@@ -293,8 +294,7 @@ async def complete_game(
         game_id,
         body.elapsed_seconds,
     )
-    await schedule_completion_notices(bot, session, game)
-    return await game_response(session, game)
+    return game_response(game, completion=await announce_completion(bot, session, game))
 
 
 @router.post("/{game_id}/abandon", response_model=GameResponse)
@@ -310,4 +310,4 @@ async def abandon_game(
         game_id,
         body.elapsed_seconds,
     )
-    return await game_response(session, game)
+    return game_response(game, completion=None)

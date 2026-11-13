@@ -1,3 +1,5 @@
+from dataclasses import dataclass
+
 from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql.selectable import Subquery
@@ -16,6 +18,16 @@ from app.services.stats.scoring import CLEAN_WIN
 from app.services.user_display_name import display_name_for_username
 
 _LEADERBOARD_LIMIT = 10
+
+
+@dataclass(frozen=True)
+class CompletionRanks:
+    # Both None unless the game is a completed, scored, clean win.
+    rating_rank: int | None
+    previous_rating_rank: int | None
+
+
+_NO_RANKS = CompletionRanks(rating_rank=None, previous_rating_rank=None)
 
 
 async def build_clean_best_leaderboard(
@@ -57,14 +69,24 @@ def _clean_best_per_user_subquery(difficulty: Difficulty) -> Subquery:
     )
 
 
+def _is_scored_completion(game: Game) -> bool:
+    return game.status == GameStatus.completed and not game.is_analysis and not game.is_lesson
+
+
+async def completion_recap(session: AsyncSession, game: Game) -> CompletionRecap | None:
+    if not _is_scored_completion(game):
+        return None
+    return await build_completion_recap(session, game, await completion_ranks(session, game))
+
+
 async def build_completion_recap(
     session: AsyncSession,
     game: Game,
+    ranks: CompletionRanks,
 ) -> CompletionRecap | None:
-    if game.status != GameStatus.completed or game.is_analysis or game.is_lesson:
+    if not _is_scored_completion(game):
         return None
     clean = game.mistakes_count == 0 and game.hints_count == 0
-    rating_rank, previous_rating_rank = await _rating_ranks_for_completion(session, game)
     return CompletionRecap(
         clean=clean,
         your_avg_clean_seconds=await _avg_clean_elapsed_seconds(
@@ -76,8 +98,8 @@ async def build_completion_recap(
             session,
             game.difficulty,
         ),
-        rating_rank=rating_rank,
-        previous_rating_rank=previous_rating_rank,
+        rating_rank=ranks.rating_rank,
+        previous_rating_rank=ranks.previous_rating_rank,
     )
 
 
@@ -107,12 +129,9 @@ async def _global_avg_clean_elapsed_seconds(
     return summaries[difficulty].avg_clean_seconds
 
 
-async def _rating_ranks_for_completion(
-    session: AsyncSession,
-    game: Game,
-) -> tuple[int | None, int | None]:
-    if game.mistakes_count != 0 or game.hints_count != 0:
-        return None, None
+async def completion_ranks(session: AsyncSession, game: Game) -> CompletionRanks:
+    if not _is_scored_completion(game) or game.mistakes_count != 0 or game.hints_count != 0:
+        return _NO_RANKS
     previous_clean_best = await session.scalar(
         select(func.min(Game.elapsed_seconds)).where(
             Game.user_id == game.user_id,
@@ -130,20 +149,23 @@ async def _rating_ranks_for_completion(
         else min(game.elapsed_seconds, int(previous_clean_best)),
     )
     if previous_clean_best is None:
-        return rating_rank, None
+        return CompletionRanks(rating_rank=rating_rank, previous_rating_rank=None)
     previous_rating_rank = await _rank_among_clean_bests(
         session,
         difficulty=game.difficulty,
         user_id=game.user_id,
         best_seconds=int(previous_clean_best),
     )
-    return rating_rank, previous_rating_rank
+    return CompletionRanks(rating_rank=rating_rank, previous_rating_rank=previous_rating_rank)
 
 
-async def ejected_top10_user_id(session: AsyncSession, game: Game) -> int | None:
-    if game.status != GameStatus.completed or game.is_analysis or game.is_lesson:
-        return None
-    rating_rank, previous_rating_rank = await _rating_ranks_for_completion(session, game)
+async def ejected_top10_user_id(
+    session: AsyncSession,
+    game: Game,
+    ranks: CompletionRanks,
+) -> int | None:
+    rating_rank = ranks.rating_rank
+    previous_rating_rank = ranks.previous_rating_rank
     if rating_rank is None:
         return None
     entered_from_outside = (

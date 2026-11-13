@@ -1,10 +1,9 @@
 from typing import assert_never
 
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from app.models.enums import GameStatus
 from app.models.game import Game
 from app.schemas.game import (
+    CompletionRecap,
     GameEvent,
     GameHistoryItem,
     GameResponse,
@@ -30,12 +29,11 @@ from app.services.games.review import GameReview
 from app.services.games.stored_state import dump_stored_event, read_events, read_notes
 from app.services.games.undo import UndoResult
 from app.services.lesson_progress_service import TechniqueProgress
-from app.services.stats.clean_best import build_completion_recap
 from app.services.sudoku.lessons.runtime import lesson_runtime
 from app.services.sudoku.validator import conflict_indices, wrong_digit_indices
 
 
-async def game_response(session: AsyncSession, game: Game) -> GameResponse:
+def game_response(game: Game, *, completion: CompletionRecap | None) -> GameResponse:
     assists = GameAssistsPayload.model_validate(game.assists)
     notes = read_notes(game.notes)
     lesson_role = None
@@ -88,7 +86,7 @@ async def game_response(session: AsyncSession, game: Game) -> GameResponse:
             wrong_digit_indices(game.current_grid, game.puzzle, game.solution),
         ),
         undo_count=len(game.undo_stack),
-        completion=await build_completion_recap(session, game),
+        completion=completion,
     )
 
 
@@ -173,22 +171,16 @@ def lesson_progress_response(items: list[TechniqueProgress]) -> LessonProgressRe
     )
 
 
-async def move_result_to_response(
-    session: AsyncSession,
-    move_result: MoveResult,
-) -> MoveCellResponse:
-    game_payload = await game_response(session, move_result.game)
+def move_result_to_response(move_result: MoveResult) -> MoveCellResponse:
+    game_payload = game_response(move_result.game, completion=None)
     return MoveCellResponse(
         **game_payload.model_dump(),
         is_mistake=move_result.is_mistake,
     )
 
 
-async def undo_result_to_response(
-    session: AsyncSession,
-    undo_result: UndoResult,
-) -> UndoMoveResponse:
-    game_payload = await game_response(session, undo_result.game)
+def undo_result_to_response(undo_result: UndoResult) -> UndoMoveResponse:
+    game_payload = game_response(undo_result.game, completion=None)
     return UndoMoveResponse(
         **game_payload.model_dump(),
         flashed_cell_indices=undo_result.flashed_cell_indices,
@@ -249,11 +241,8 @@ def _technique_hint_response(game_payload: GameResponse, hint: TechniqueHint) ->
     )
 
 
-async def hint_result_to_response(
-    session: AsyncSession,
-    hint_result: CoachHintResult,
-) -> HintResponse:
-    game_payload = await game_response(session, hint_result.game)
+def hint_result_to_response(hint_result: CoachHintResult) -> HintResponse:
+    game_payload = game_response(hint_result.game, completion=None)
     hint = hint_result.hint
     match hint:
         case MistakeHint():
