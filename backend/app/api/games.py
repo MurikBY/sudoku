@@ -4,6 +4,16 @@ from aiogram import Bot
 from fastapi import APIRouter, Depends, Query, Response
 
 from app.api.deps import CurrentUser, DbSession, PlayLockHeader, get_bot
+from app.api.mappers import (
+    game_history_item,
+    game_response,
+    game_review_response,
+    hint_result_to_response,
+    lesson_progress_response,
+    move_result_to_response,
+    taught_lesson_response,
+    undo_result_to_response,
+)
 from app.models.enums import Difficulty, GameStatus
 from app.schemas.game import (
     AbandonGameRequest,
@@ -25,16 +35,6 @@ from app.schemas.game import (
     TaughtLessonSnapshotResponse,
     UndoMoveRequest,
     UndoMoveResponse,
-)
-from app.schemas.mappers import (
-    game_history_item,
-    game_response,
-    game_review_response,
-    hint_result_to_response,
-    lesson_progress_response,
-    move_result_to_response,
-    taught_lesson_response,
-    undo_result_to_response,
 )
 from app.services.game_completion_notify import announce_completion
 from app.services.games import analysis, creation, lessons, lifecycle, queries, review, undo
