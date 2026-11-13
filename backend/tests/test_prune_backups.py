@@ -1,22 +1,11 @@
-import importlib.util
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from types import ModuleType
 
 import pytest
 
+from tests.deploy_scripts import load_deploy_script
 
-def _load_prune_backups() -> ModuleType:
-    path = Path(__file__).resolve().parents[2] / "deploy" / "prune_backups.py"
-    spec = importlib.util.spec_from_file_location("prune_backups", path)
-    if spec is None or spec.loader is None:
-        raise RuntimeError(f"cannot load {path}")
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
-
-
-_PRUNE = _load_prune_backups()
+_PRUNE = load_deploy_script("prune_backups")
 NOW = datetime(2026, 11, 13, 20, 0, tzinfo=UTC)
 
 

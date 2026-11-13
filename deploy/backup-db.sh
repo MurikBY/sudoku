@@ -22,7 +22,6 @@ COMPOSE_CMD=${COMPOSE_CMD:-docker compose}
 BACKUP_DIR=${BACKUP_DIR:-"$ROOT/backups"}
 STAMP="$(date -u +%Y%m%dT%H%M%SZ)"
 DUMP_PATH="$BACKUP_DIR/sudoku-${STAMP}.dump"
-ENV_COPY_PATH="$BACKUP_DIR/env-${STAMP}"
 
 mkdir -p "$BACKUP_DIR"
 chmod 700 "$BACKUP_DIR"
@@ -34,11 +33,9 @@ $COMPOSE_CMD exec -T \
   pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Fc \
   >"$DUMP_PATH"
 
-cp .env "$ENV_COPY_PATH"
-chmod 600 "$DUMP_PATH" "$ENV_COPY_PATH"
+chmod 600 "$DUMP_PATH"
 
 echo "wrote $DUMP_PATH"
-echo "wrote $ENV_COPY_PATH"
 
 # Runs only after the new dump is on disk, so a failed dump never costs an old one.
 python3 "$ROOT/deploy/prune_backups.py" "$BACKUP_DIR"
