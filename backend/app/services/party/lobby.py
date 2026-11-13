@@ -105,16 +105,31 @@ async def _leave_waiting_parties(
     return affected
 
 
-async def _broadcast_left_parties(session: AsyncSession, party_ids: list[uuid.UUID]) -> None:
+async def _announce_cancelled(party: Party) -> None:
+    await party_ws_hub.broadcast(party.id, party_cancelled_event(party))
+    await party_ws_hub.close_room(party.id)
+
+
+async def _announce_member_left(party: Party, user_id: int) -> None:
+    # Close first, so the member who left does not receive the new member list.
+    await party_ws_hub.close_user(party.id, user_id)
+    await party_ws_hub.broadcast(party.id, party_members_event(party))
+
+
+async def _announce_left_parties(
+    session: AsyncSession,
+    user_id: int,
+    party_ids: list[uuid.UUID],
+) -> None:
     for party_id in party_ids:
         left = await session.get(Party, party_id)
         if left is None:
             continue
         left = await load_party(session, party_id)
         if left.status == PartyStatus.cancelled:
-            await party_ws_hub.broadcast(party_id, party_cancelled_event(left))
+            await _announce_cancelled(left)
         else:
-            await party_ws_hub.broadcast(party_id, party_members_event(left))
+            await _announce_member_left(left, user_id)
 
 
 async def create_party(
@@ -142,7 +157,7 @@ async def create_party(
         ),
     )
     await session.commit()
-    await _broadcast_left_parties(session, left_ids)
+    await _announce_left_parties(session, host.id, left_ids)
     return await load_party(session, party.id)
 
 
@@ -169,8 +184,9 @@ async def join_party(session: AsyncSession, user: User, code: str) -> Party:
         ),
     )
     await session.commit()
-    await _broadcast_left_parties(
+    await _announce_left_parties(
         session,
+        user.id,
         [party_id for party_id in left_ids if party_id != destination_id],
     )
     party = await load_party(session, destination_id)
@@ -193,13 +209,12 @@ async def leave_party(session: AsyncSession, user: User, party_id: uuid.UUID) ->
     if party.host_user_id == user.id:
         party.status = PartyStatus.cancelled
         await session.commit()
-        await party_ws_hub.broadcast(party.id, party_cancelled_event(party))
+        await _announce_cancelled(party)
         return
 
     await session.delete(membership)
     await session.commit()
-    party = await load_party(session, party_id)
-    await party_ws_hub.broadcast(party.id, party_members_event(party))
+    await _announce_member_left(await load_party(session, party_id), user.id)
 
 
 async def cancel_party(session: AsyncSession, user: User, party_id: uuid.UUID) -> None:
@@ -210,7 +225,7 @@ async def cancel_party(session: AsyncSession, user: User, party_id: uuid.UUID) -
         raise PartyNotWaiting(f"party is not waiting: {party.id}")
     party.status = PartyStatus.cancelled
     await session.commit()
-    await party_ws_hub.broadcast(party.id, party_cancelled_event(party))
+    await _announce_cancelled(party)
 
 
 async def update_party_difficulty(

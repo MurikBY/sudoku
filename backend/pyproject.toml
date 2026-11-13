@@ -11,6 +11,8 @@ dependencies = [
     "pydantic-settings==2.14.0",
     "SQLAlchemy[asyncio]==2.0.49",
     "uvicorn==0.46.0",
+    # uvicorn has no WebSocket protocol of its own: without this, every upgrade is HTTP 404.
+    "websockets==17.4",
 ]
 
 [dependency-groups]

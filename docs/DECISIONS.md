@@ -20,7 +20,7 @@ Refill is a process, not `asyncio.to_thread`. A thread shares the GIL with the e
 
 The poll is the recovery. A dropped socket still learns that the party started, or that a guest's current party is gone, on the next poll.
 
-**Trade-off.** The poll keeps running while the socket is open. A missed push waits up to 1500 ms. There is no reconnect.
+**Trade-off.** The poll keeps running while the socket is open. A missed push waits up to 1500 ms. There is no reconnect. A broadcast runs inside the request that changed the lobby, so a send that takes longer than 2 seconds drops that socket from the lobby. That client then learns the rest from the poll.
 
 ## Move log
 

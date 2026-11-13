@@ -1,6 +1,6 @@
 import uuid
 
-from fastapi import APIRouter, Query, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, Query, WebSocket
 
 from app.db import open_session
 from app.services.party.errors import PartyForbidden, PartyNotFound
@@ -30,11 +30,17 @@ async def party_websocket(
     await party_ws_hub.connect(party_id, user_id, websocket)
     try:
         async with open_session() as session:
-            party = await get_party_for_member(session, party_id, user_id)
-            await websocket.send_text(party_members_event(party).model_dump_json())
-        while True:
-            await websocket.receive_text()
-    except WebSocketDisconnect:
-        pass
+            snapshot = party_members_event(
+                await get_party_for_member(session, party_id, user_id),
+            )
+        await party_ws_hub.send_to_socket(party_id, websocket, snapshot)
+        await _wait_for_disconnect(websocket)
     finally:
         await party_ws_hub.disconnect(party_id, websocket)
+
+
+async def _wait_for_disconnect(websocket: WebSocket) -> None:
+    # receive(), not receive_text(): the hub can close this socket from another request,
+    # and receive_text() raises once the application side is closed.
+    while (await websocket.receive())["type"] != "websocket.disconnect":
+        continue

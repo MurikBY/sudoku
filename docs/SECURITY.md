@@ -18,6 +18,8 @@ The party socket is `/api/ws/parties/{party_id}?ticket=`. The ticket is not `ini
 
 `consume` removes the ticket, so it works once. It expires after 30 seconds, and it must name the same party. A missing, expired, or mismatched ticket, or a user who is not a member, is accepted and then closed with code 4401. The socket does not reconnect.
 
+The client sends nothing on the socket. uvicorn runs with `--ws-max-size 1024`, so a larger frame closes the socket with code 1009 before the application reads it.
+
 ## Webhook and admin commands
 
 Telegram posts updates to `POST /api/telegram/webhook`. The header is `X-Telegram-Bot-Api-Secret-Token`. A missing header and a wrong value both get HTTP 403, `Invalid webhook secret`, compared with `hmac.compare_digest`. If the secret is unset, or the bot is not running, the route answers HTTP 503 and does not feed the update.

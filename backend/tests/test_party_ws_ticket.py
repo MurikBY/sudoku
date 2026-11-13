@@ -6,9 +6,10 @@ from typing import cast
 
 import pytest
 import pytest_asyncio
-from fastapi import WebSocket, WebSocketDisconnect
+from fastapi import WebSocket
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
+from starlette.websockets import WebSocketState
 
 from app.api.ws_parties import party_websocket
 from app.services.party_ws_hub import party_ws_hub
@@ -18,35 +19,27 @@ from app.services.party_ws_ticket import (
     PartyWsTicketStore,
     party_ws_tickets,
 )
-
-ASSISTS = {
-    "pencil": True,
-    "highlight_peers": False,
-    "highlight_same_digit": True,
-    "mistake_feedback": True,
-    "dim_completed_digits": False,
-    "unit_complete_animation": False,
-    "auto_clear_notes": True,
-    "sticky_digit": True,
-}
+from tests.fixtures import PARTY_ASSISTS
 
 
 class _PartySocketProbe:
     def __init__(self) -> None:
         self.events: list[dict] = []
         self.close_code: int | None = None
+        self.application_state = WebSocketState.CONNECTING
 
     async def accept(self) -> None:
-        return None
+        self.application_state = WebSocketState.CONNECTED
 
     async def close(self, code: int = 1000) -> None:
+        self.application_state = WebSocketState.DISCONNECTED
         self.close_code = code
 
     async def send_text(self, payload: str) -> None:
         self.events.append(json.loads(payload))
 
-    async def receive_text(self) -> str:
-        raise WebSocketDisconnect()
+    async def receive(self) -> dict[str, object]:
+        return {"type": "websocket.disconnect", "code": 1000}
 
 
 @pytest_asyncio.fixture
@@ -109,7 +102,7 @@ async def test_member_ws_ticket_is_single_use(
     outsider = init_data_for(802, "ws_outsider")
     create = await async_client.post(
         "/api/parties",
-        json={"difficulty": "easy", "assists": ASSISTS},
+        json={"difficulty": "easy", "assists": PARTY_ASSISTS},
         headers=host,
     )
     assert create.status_code == 201
@@ -148,7 +141,7 @@ async def test_ws_ticket_rejected_for_other_party(
     host = init_data_for(803, "ws_host_b")
     create = await async_client.post(
         "/api/parties",
-        json={"difficulty": "easy", "assists": ASSISTS},
+        json={"difficulty": "easy", "assists": PARTY_ASSISTS},
         headers=host,
     )
     assert create.status_code == 201

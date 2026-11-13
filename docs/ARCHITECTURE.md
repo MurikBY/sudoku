@@ -6,9 +6,9 @@ The Mini App is a React client. The API is FastAPI. How a screen looks is in [DE
 
 HTTP calls send Telegram `initData` in the `X-Init-Data` header. `parse_and_validate` checks the HMAC with `compare_digest` and rejects `auth_date` older than 24 hours or more than 60 seconds in the future.
 
-The party WebSocket does not take `initData`. The client asks for a ticket, then connects to `/api/ws/parties/{party_id}` with that ticket as a query parameter. `consume` removes the ticket, so it works once, and it expires after 30 seconds. The `members`, `started`, and `cancelled` events on that socket are schemas in the OpenAPI document.
+The party WebSocket does not take `initData`. The client asks for a ticket, then connects to `/api/ws/parties/{party_id}` with that ticket as a query parameter. `consume` removes the ticket, so it works once, and it expires after 30 seconds. The `members`, `started`, and `cancelled` events on that socket are schemas in the OpenAPI document. A member who leaves has their socket closed before the others get `members`. A cancelled lobby gets `cancelled`, and then every socket in it is closed. Both closes use code 1000.
 
-A router in `api/` calls a function in `services/`. Services raise the categories in `services/errors.py`. `api/errors.py` turns each category into one HTTP status. Routers do not catch those errors. Request and response models live in `schemas/`. Rows live in `models/`.
+A router in `api/` calls a function in `services/`. Services raise the categories in `services/errors.py`. `api/errors.py` turns each category into one HTTP status. HTTP routers do not catch those errors. The party WebSocket route catches a rejected ticket and a non-member, and closes with code 4401. Request and response models live in `schemas/`. Rows live in `models/`.
 
 Starting a game or a party takes a ready puzzle from `puzzle_pool`. The API does not generate one during that request. Why the pool is there is in [Pre-generated puzzles](DECISIONS.md#pre-generated-puzzles). A lesson and an analysis do not use the pool. One player can take 6 puzzles in 60 seconds, across new games and party starts. The next take is rejected with HTTP 429. The counter lives in this process. See [SECURITY.md](SECURITY.md).
 
@@ -27,7 +27,7 @@ Board changes go through `enqueueBoardAction` in `hooks/useGame.ts`. The calls r
 
 ## System context
 
-Traefik sends `/api`, including the party WebSocket, to FastAPI, and every other path to nginx. nginx serves the built client. Telegram posts bot updates to `/api/telegram/webhook`. FastAPI calls the Bot API.
+Traefik sends `/api`, including the party WebSocket, to FastAPI, and every other path to nginx. uvicorn speaks WebSocket through the `websockets` package, with `--ws websockets-sansio` in `entrypoint.sh`. nginx serves the built client. Telegram posts bot updates to `/api/telegram/webhook`. FastAPI calls the Bot API.
 
 ```mermaid
 flowchart LR

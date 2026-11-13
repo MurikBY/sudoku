@@ -34,6 +34,17 @@ TEST_ARCHIVE: dict[Difficulty, ArchivedRatingTotals] = {
     ),
 }
 
+PARTY_ASSISTS = {
+    "pencil": True,
+    "highlight_peers": False,
+    "highlight_same_digit": True,
+    "mistake_feedback": True,
+    "dim_completed_digits": False,
+    "unit_complete_animation": False,
+    "auto_clear_notes": True,
+    "sticky_digit": True,
+}
+
 
 def make_init_data(
     bot_token: str,
