@@ -1,5 +1,5 @@
 import type { Game } from "@/api/types";
-import { COMPLETION_CONNECTION_ERROR } from "@/hooks/useBoardMoves";
+import { COMPLETION_CONNECTION_ERROR } from "@/hooks/useGameCompletion";
 import { useAnalysisSolvedExit } from "@/hooks/useAnalysisSolvedExit";
 import { useGame } from "@/hooks/useGame";
 import { useGameTimer } from "@/hooks/useGameTimer";
