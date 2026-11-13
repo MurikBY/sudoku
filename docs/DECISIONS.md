@@ -26,9 +26,9 @@ The poll is the recovery. A dropped socket still learns that the party started, 
 
 **Decision.** `games.events` is a JSONB list on the game row. `current_grid` is the live 81-character board. `notes` and `undo_stack` are separate JSONB columns. `replay_available` is true when `events` is non-empty.
 
-**Why.** Replay and analysis rebuild a position with `replay_events_to_state`, walking a prefix of the log from the puzzle. The grid is only the present. Writers append `set`, `clear`, and `notes`. Undo pops `undo_stack`. When the digit changes, undo appends a new `set` or `clear`, so the log still reaches the restored grid. Restored pencil marks are written to `notes` from the stack entry.
+**Why.** Replay and analysis rebuild a position with `replay_events_to_state`, walking a prefix of the log from the puzzle. The grid is only the present. Writers append `set`, `clear`, and `notes`. Undo pops `undo_stack`. When the digit changes, undo appends a new `set` or `clear`, so the log still reaches the restored grid. Restored pencil marks are written to `notes` from the stack entry, and each cell whose marks change gets a `notes` event. A replay of the whole log reaches the board the player sees.
 
-**Trade-off.** Each append rewrites the JSONB value. A long game is one wide row, and replay walks the list in the API process. A pencil-mark undo is not itself an event. A replay that walks `events` follows the log. The live `notes` column is what the board shows after that undo.
+**Trade-off.** Each append rewrites the JSONB value. A long game is one wide row, and replay walks the list in the API process. Undoing a move that cleared peer marks appends one `notes` event per restored cell.
 
 ## One device at a time
 
