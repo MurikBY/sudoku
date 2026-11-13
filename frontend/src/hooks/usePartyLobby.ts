@@ -178,13 +178,15 @@ export function usePartyLobby({
     party !== null &&
     party.status === "waiting" &&
     (phase === "host" || (phase === "guest" && joinedOk));
+  // The id, not the party object: every snapshot is a new object and would restart the poll.
+  const waitingPartyId = waitingInLobby ? party.id : null;
+  const isGuest = phase === "guest";
 
   useEffect(() => {
-    if (!open || !waitingInLobby || party === null) {
+    if (!open || waitingPartyId === null) {
       return undefined;
     }
-    const partyId = party.id;
-    const isGuest = phase === "guest";
+    const partyId = waitingPartyId;
 
     const poll = async () => {
       try {
@@ -209,15 +211,7 @@ export function usePartyLobby({
       void poll();
     }, LOBBY_POLL_MS);
     return () => window.clearInterval(intervalId);
-  }, [
-    applyPartySnapshot,
-    handleStarted,
-    markLobbyClosedByHost,
-    open,
-    party,
-    phase,
-    waitingInLobby,
-  ]);
+  }, [applyPartySnapshot, handleStarted, isGuest, markLobbyClosedByHost, open, waitingPartyId]);
 
   const openLobby = useCallback(() => {
     dispatch({ type: "openChooser" });
