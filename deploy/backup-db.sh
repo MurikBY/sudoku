@@ -41,4 +41,4 @@ echo "wrote $DUMP_PATH"
 echo "wrote $ENV_COPY_PATH"
 
 # Runs only after the new dump is on disk, so a failed dump never costs an old one.
-BACKUP_DIR="$BACKUP_DIR" "$ROOT/deploy/prune-backups.sh"
+python3 "$ROOT/deploy/prune_backups.py" "$BACKUP_DIR"
