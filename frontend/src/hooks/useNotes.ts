@@ -15,6 +15,12 @@ import {
 
 type EnqueueBoardAction = <T>(action: () => Promise<T>) => Promise<T>;
 
+type NotesStore = {
+  gameRef: RefObject<Game>;
+  storeGame: (game: Game) => void;
+  dispatch: Dispatch<BoardAction>;
+};
+
 function notesWithoutPaintedDigit(
   notes: CellNotesMap,
   cellIndex: number,
@@ -22,6 +28,53 @@ function notesWithoutPaintedDigit(
 ): CellNotesMap {
   const remaining = notesForCell(notes, cellIndex).filter((value) => value !== digit);
   return notesWithCellDigits(notes, cellIndex, remaining);
+}
+
+function isNotesEditableCell(game: Game, cellIndex: number | null): cellIndex is number {
+  return (
+    cellIndex !== null &&
+    game.status === "in_progress" &&
+    !isGivenCell(game.puzzle, cellIndex) &&
+    cellDigitValue(game.current_grid, cellIndex) === null
+  );
+}
+
+function sameDigits(left: readonly number[], right: readonly number[]): boolean {
+  return left.length === right.length && left.every((value, index) => value === right[index]);
+}
+
+// Runs on the queue after the optimistic paint. The answer is merged into the latest notes,
+// because later paints may already be on screen; a failure removes only this digit.
+async function sendPaintedNote(
+  store: NotesStore,
+  cellIndex: number,
+  digit: number,
+  elapsedSeconds: number,
+) {
+  const queuedGame = store.gameRef.current;
+  const digitsToSend = addNoteDigit(notesForCell(queuedGame.notes, cellIndex), digit);
+  store.dispatch({ type: "clearError" });
+  try {
+    const updatedGame = await setCellNotes(queuedGame.id, cellIndex, digitsToSend, elapsedSeconds);
+    const mergedGame = {
+      ...updatedGame,
+      notes: mergedCellNotes(
+        store.gameRef.current.notes,
+        cellIndex,
+        updatedGame.notes[String(cellIndex)] ?? digitsToSend,
+      ),
+    };
+    store.storeGame(mergedGame);
+    return mergedGame;
+  } catch (notesError) {
+    const latestGame = store.gameRef.current;
+    store.storeGame({
+      ...latestGame,
+      notes: notesWithoutPaintedDigit(latestGame.notes, cellIndex, digit),
+    });
+    store.dispatch({ type: "setError", error: formatApiErrorMessage(notesError) });
+    return null;
+  }
 }
 
 type UseNotesArgs = {
@@ -37,147 +90,75 @@ export function useNotes({
   selectedIndexRef,
   dispatch,
 }: UseNotesArgs) {
-  const applyNotesDigits = useCallback(
-    (digits: number[], elapsedSeconds: number, cellIndexOverride?: number) =>
+  const storeGame = useCallback(
+    (game: Game) => {
+      gameRef.current = game;
+      dispatch({ type: "storeGame", game });
+    },
+    [dispatch, gameRef],
+  );
+
+  const sendCellNotes = useCallback(
+    (
+      digitsFor: (game: Game, cellIndex: number) => number[],
+      elapsedSeconds: number,
+      cellIndexOverride?: number,
+    ) =>
       enqueueBoardAction(async () => {
         const currentGame = gameRef.current;
-        const targetIndex = cellIndexOverride ?? selectedIndexRef.current;
-        if (targetIndex === null || currentGame.status !== "in_progress") {
+        const cellIndex = cellIndexOverride ?? selectedIndexRef.current;
+        if (!isNotesEditableCell(currentGame, cellIndex)) {
           return null;
         }
-        if (isGivenCell(currentGame.puzzle, targetIndex)) {
-          return null;
-        }
-        if (cellDigitValue(currentGame.current_grid, targetIndex) !== null) {
-          return null;
-        }
-
-        const cellIndex = targetIndex;
-
+        const digits = digitsFor(currentGame, cellIndex);
         dispatch({ type: "clearError" });
         try {
           const updatedGame = await setCellNotes(currentGame.id, cellIndex, digits, elapsedSeconds);
-          gameRef.current = updatedGame;
-          dispatch({ type: "storeGame", game: updatedGame });
+          storeGame(updatedGame);
           return updatedGame;
         } catch (notesError) {
           dispatch({ type: "setError", error: formatApiErrorMessage(notesError) });
           return null;
         }
       }),
-    [dispatch, enqueueBoardAction, gameRef, selectedIndexRef],
+    [dispatch, enqueueBoardAction, gameRef, selectedIndexRef, storeGame],
   );
 
   const toggleNote = useCallback(
     (digit: number, elapsedSeconds: number, cellIndexOverride?: number) =>
-      enqueueBoardAction(async () => {
-        const currentGame = gameRef.current;
-        const targetIndex = cellIndexOverride ?? selectedIndexRef.current;
-        if (targetIndex === null || currentGame.status !== "in_progress") {
-          return null;
-        }
-        if (isGivenCell(currentGame.puzzle, targetIndex)) {
-          return null;
-        }
-        if (cellDigitValue(currentGame.current_grid, targetIndex) !== null) {
-          return null;
-        }
-
-        const cellIndex = targetIndex;
-        const previousDigits = notesForCell(currentGame.notes, cellIndex);
-        const nextDigits = toggleNoteDigit(previousDigits, digit);
-
-        dispatch({ type: "clearError" });
-        try {
-          const updatedGame = await setCellNotes(
-            currentGame.id,
-            cellIndex,
-            nextDigits,
-            elapsedSeconds,
-          );
-          gameRef.current = updatedGame;
-          dispatch({ type: "storeGame", game: updatedGame });
-          return updatedGame;
-        } catch (notesError) {
-          dispatch({ type: "setError", error: formatApiErrorMessage(notesError) });
-          return null;
-        }
-      }),
-    [dispatch, enqueueBoardAction, gameRef, selectedIndexRef],
+      sendCellNotes(
+        (game, cellIndex) => toggleNoteDigit(notesForCell(game.notes, cellIndex), digit),
+        elapsedSeconds,
+        cellIndexOverride,
+      ),
+    [sendCellNotes],
   );
 
   const addNote = useCallback(
     (digit: number, elapsedSeconds: number, cellIndex: number) => {
       const currentGame = gameRef.current;
-      if (currentGame.status !== "in_progress") {
+      if (!isNotesEditableCell(currentGame, cellIndex)) {
         return Promise.resolve(null);
       }
-      if (isGivenCell(currentGame.puzzle, cellIndex)) {
-        return Promise.resolve(null);
-      }
-      if (cellDigitValue(currentGame.current_grid, cellIndex) !== null) {
-        return Promise.resolve(null);
-      }
-
       const previousDigits = notesForCell(currentGame.notes, cellIndex);
       const nextDigits = addNoteDigit(previousDigits, digit);
-      if (
-        previousDigits.length === nextDigits.length &&
-        previousDigits.every((value, index) => value === nextDigits[index])
-      ) {
+      if (sameDigits(previousDigits, nextDigits)) {
         return Promise.resolve(currentGame);
       }
-
-      const optimisticGame = {
+      storeGame({
         ...currentGame,
         notes: notesWithCellDigits(currentGame.notes, cellIndex, nextDigits),
-      };
-      gameRef.current = optimisticGame;
-      dispatch({ type: "storeGame", game: optimisticGame });
-
-      return enqueueBoardAction(async () => {
-        const queuedGame = gameRef.current;
-        const digitsToSend = addNoteDigit(notesForCell(queuedGame.notes, cellIndex), digit);
-
-        dispatch({ type: "clearError" });
-        try {
-          const updatedGame = await setCellNotes(
-            queuedGame.id,
-            cellIndex,
-            digitsToSend,
-            elapsedSeconds,
-          );
-          const mergedGame = {
-            ...updatedGame,
-            notes: mergedCellNotes(
-              gameRef.current.notes,
-              cellIndex,
-              updatedGame.notes[String(cellIndex)] ?? digitsToSend,
-            ),
-          };
-          gameRef.current = mergedGame;
-          dispatch({ type: "storeGame", game: mergedGame });
-          return mergedGame;
-        } catch (notesError) {
-          const latestGame = gameRef.current;
-          const revertedGame = {
-            ...latestGame,
-            notes: notesWithoutPaintedDigit(latestGame.notes, cellIndex, digit),
-          };
-          gameRef.current = revertedGame;
-          dispatch({ type: "storeGame", game: revertedGame });
-          dispatch({ type: "setError", error: formatApiErrorMessage(notesError) });
-          return null;
-        }
       });
+      const store = { gameRef, storeGame, dispatch };
+      return enqueueBoardAction(() => sendPaintedNote(store, cellIndex, digit, elapsedSeconds));
     },
-    [dispatch, enqueueBoardAction, gameRef],
+    [dispatch, enqueueBoardAction, gameRef, storeGame],
   );
 
   const clearNotes = useCallback(
-    async (elapsedSeconds: number) => applyNotesDigits([], elapsedSeconds),
-    [applyNotesDigits],
+    async (elapsedSeconds: number) => sendCellNotes(() => [], elapsedSeconds),
+    [sendCellNotes],
   );
 
-  return { applyNotesDigits, toggleNote, addNote, clearNotes };
+  return { toggleNote, addNote, clearNotes };
 }
