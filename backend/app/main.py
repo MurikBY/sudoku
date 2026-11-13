@@ -12,6 +12,7 @@ from app.api.games import router as games_router
 from app.api.health import router as health_router
 from app.api.parties import router as parties_router
 from app.api.play_lock import router as play_lock_router
+from app.api.request_body_limit import RequestBodyLimit
 from app.api.stats import router as stats_router
 from app.api.telegram_webhook import router as telegram_webhook_router
 from app.api.users import router as users_router
@@ -116,6 +117,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(RequestBodyLimit)
 
 app.include_router(health_router)
 app.include_router(users_router)

@@ -35,6 +35,8 @@ _HTTP_CODE_BY_STATUS: dict[int, str] = {
     403: "forbidden",
     404: "not_found",
     405: "method_not_allowed",
+    # Raised by RequestBodyLimit while the body is read.
+    413: "payload_too_large",
     503: "unavailable",
 }
 

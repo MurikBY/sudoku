@@ -6,6 +6,8 @@ What the server checks, what a client can still do, and what is not built. The c
 
 Every API route except health, readiness, the OpenAPI document, and the Telegram webhook requires the `X-Init-Data` header. A missing header is HTTP 401, `X-Init-Data header is missing`.
 
+FastAPI reads a JSON body before the route's dependencies run, so the body is read before the header is checked. `RequestBodyLimit` caps it at 1 MiB, by `Content-Length` or by the bytes received, and answers HTTP 413 above that. An unreadable body is HTTP 400.
+
 `parse_and_validate` checks the Telegram Mini App signature. The secret is HMAC-SHA256 of the bot token under the key `WebAppData`. The signed string is the other fields, sorted, joined with newlines. The comparison uses `hmac.compare_digest`. A bad signature, a missing `hash`, a missing or non-integer `auth_date`, or a missing user id is HTTP 401 with the validator's message.
 
 `auth_date` older than 86400 seconds is rejected. A timestamp more than 60 seconds in the future is rejected. That 60 seconds is clock skew, not a longer lifetime. A captured header stays valid until it expires or the bot token changes.
