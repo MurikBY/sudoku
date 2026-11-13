@@ -39,3 +39,6 @@ chmod 600 "$DUMP_PATH" "$ENV_COPY_PATH"
 
 echo "wrote $DUMP_PATH"
 echo "wrote $ENV_COPY_PATH"
+
+# Runs only after the new dump is on disk, so a failed dump never costs an old one.
+BACKUP_DIR="$BACKUP_DIR" "$ROOT/deploy/prune-backups.sh"
