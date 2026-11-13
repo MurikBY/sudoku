@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import html
 import logging
+import uuid
+from dataclasses import dataclass
 from datetime import datetime
 
 from aiogram import Bot
@@ -18,6 +20,13 @@ from app.services.bot_message_format import format_elapsed, format_game_when
 logger = logging.getLogger(__name__)
 
 
+@dataclass(frozen=True)
+class PartyCompletionNotice:
+    party_id: uuid.UUID
+    text: str
+    recipient_ids: list[int]
+
+
 def build_completion_message(
     display_name: str,
     elapsed_seconds: int,
@@ -31,11 +40,10 @@ def build_completion_message(
     )
 
 
-async def notify_party_member_completed(
-    bot: Bot,
+async def build_party_completion_notice(
     session: AsyncSession,
     game: Game,
-) -> None:
+) -> PartyCompletionNotice:
     party_id = game.party_id
     if party_id is None:
         raise ValueError("party completion notify requires a party game")
@@ -56,42 +64,53 @@ async def notify_party_member_completed(
     if completer is None:
         raise RuntimeError(f"completer is not a party member: {game.user_id}")
 
-    text = build_completion_message(
-        completer.display_name,
-        game.elapsed_seconds,
-        party.code,
-        started_at,
+    return PartyCompletionNotice(
+        party_id=party.id,
+        text=build_completion_message(
+            completer.display_name,
+            game.elapsed_seconds,
+            party.code,
+            started_at,
+        ),
+        recipient_ids=[
+            member.user_id for member in party.members if member.user_id != game.user_id
+        ],
     )
-    reply_markup: InlineKeyboardMarkup | None = None
-    try:
-        me = await bot.get_me()
-        if me.username:
-            reply_markup = InlineKeyboardMarkup(
-                inline_keyboard=[
-                    [
-                        InlineKeyboardButton(
-                            text="View party results",
-                            url=f"https://t.me/{me.username}?startapp=party_{party.id}",
-                        ),
-                    ],
-                ],
-            )
-    except Exception:
-        logger.exception("party notify: failed to build deep link")
 
-    for member in party.members:
-        if member.user_id == game.user_id:
-            continue
+
+async def send_party_completion_notice(bot: Bot, notice: PartyCompletionNotice) -> None:
+    reply_markup = await _party_results_button(bot, notice.party_id)
+    for recipient_id in notice.recipient_ids:
         try:
             await bot.send_message(
-                chat_id=member.user_id,
-                text=text,
+                chat_id=recipient_id,
+                text=notice.text,
                 parse_mode=ParseMode.HTML,
                 reply_markup=reply_markup,
             )
         except Exception:
             logger.exception(
                 "party notify: send failed user_id=%s party_id=%s",
-                member.user_id,
-                party_id,
+                recipient_id,
+                notice.party_id,
             )
+
+
+async def _party_results_button(bot: Bot, party_id: uuid.UUID) -> InlineKeyboardMarkup | None:
+    try:
+        me = await bot.me()
+    except Exception:
+        logger.exception("party notify: failed to build deep link")
+        return None
+    if not me.username:
+        return None
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(
+                    text="View party results",
+                    url=f"https://t.me/{me.username}?startapp=party_{party_id}",
+                ),
+            ],
+        ],
+    )

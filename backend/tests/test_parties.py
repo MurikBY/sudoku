@@ -11,6 +11,7 @@ from sqlalchemy import select, text
 from sqlalchemy.exc import DBAPIError
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
+from app.background import drain
 from app.main import app
 from app.models.enums import Difficulty, GameStatus, PartyStatus
 from app.models.game import Game
@@ -571,24 +572,21 @@ async def test_party_history_and_results(
     assert sum(player["elapsed_seconds"] is not None for player in body["players"]) == 1
 
 
-@pytest.mark.asyncio
-async def test_party_completion_notifies_guest_only(
-    async_client: AsyncClient,
-    party_headers,
-    mock_party_puzzle: None,
-) -> None:
-    class FakeBot:
-        def __init__(self) -> None:
-            self.messages: list[tuple[int, str]] = []
+class _NotifyBot:
+    def __init__(self) -> None:
+        self.messages: list[tuple[int, str]] = []
+        self.delivery_allowed = asyncio.Event()
+        self.delivery_allowed.set()
 
-        async def get_me(self) -> SimpleNamespace:
-            return SimpleNamespace(username="sudoku_bot")
+    async def me(self) -> SimpleNamespace:
+        return SimpleNamespace(username="sudoku_bot")
 
-        async def send_message(self, chat_id: int, text: str, **_kwargs: object) -> None:
-            self.messages.append((chat_id, text))
+    async def send_message(self, chat_id: int, text: str, **_kwargs: object) -> None:
+        await self.delivery_allowed.wait()
+        self.messages.append((chat_id, text))
 
-    host = party_headers(701, "host_notify")
-    guest = party_headers(702, "guest_notify")
+
+async def _started_party_game_id(async_client: AsyncClient, host: dict, guest: dict) -> str:
     create = await async_client.post(
         "/api/parties",
         json={"difficulty": "easy", "assists": ASSISTS},
@@ -602,16 +600,53 @@ async def test_party_completion_notifies_guest_only(
         headers=host,
     )
     assert start.status_code == 200
+    return start.json()["game_id"]
 
-    bot = FakeBot()
+
+@pytest.mark.asyncio
+async def test_party_completion_notifies_guest_only(
+    async_client: AsyncClient,
+    party_headers,
+    mock_party_puzzle: None,
+) -> None:
+    host = party_headers(701, "host_notify")
+    guest = party_headers(702, "guest_notify")
+    game_id = await _started_party_game_id(async_client, host, guest)
+
+    bot = _NotifyBot()
     app.state.bot = bot
     try:
-        await _complete_game_grid(async_client, host, start.json()["game_id"])
+        await _complete_game_grid(async_client, host, game_id)
+        await drain()
     finally:
         app.state.bot = None
 
     assert [chat_id for chat_id, _text in bot.messages] == [702]
     assert "finished the party puzzle" in bot.messages[0][1]
+
+
+@pytest.mark.asyncio
+async def test_completion_responds_before_the_party_notice_is_sent(
+    async_client: AsyncClient,
+    party_headers,
+    mock_party_puzzle: None,
+) -> None:
+    host = party_headers(703, "host_slow_bot")
+    guest = party_headers(704, "guest_slow_bot")
+    game_id = await _started_party_game_id(async_client, host, guest)
+
+    bot = _NotifyBot()
+    bot.delivery_allowed.clear()
+    app.state.bot = bot
+    try:
+        await _complete_game_grid(async_client, host, game_id)
+        assert bot.messages == []
+        bot.delivery_allowed.set()
+        await drain()
+    finally:
+        app.state.bot = None
+
+    assert [chat_id for chat_id, _text in bot.messages] == [704]
 
 
 def test_build_completion_message_includes_lobby():

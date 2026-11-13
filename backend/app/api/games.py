@@ -36,7 +36,7 @@ from app.schemas.mappers import (
     taught_lesson_response,
     undo_result_to_response,
 )
-from app.services.game_completion_notify import notify_game_completed
+from app.services.game_completion_notify import schedule_completion_notices
 from app.services.games import analysis, creation, lessons, lifecycle, queries, review, undo
 from app.services.games.coach_hint import apply_coach_hint
 from app.services.games.moves import CellMove, apply_move
@@ -294,7 +294,7 @@ async def complete_game(
         game_id,
         body.elapsed_seconds,
     )
-    await notify_game_completed(bot, session, game)
+    await schedule_completion_notices(bot, session, game)
     return await game_response(session, game)
 
 

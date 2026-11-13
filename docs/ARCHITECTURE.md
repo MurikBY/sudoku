@@ -27,7 +27,7 @@ Board changes go through `enqueueBoardAction` in `hooks/useGame.ts`. The calls r
 
 ## System context
 
-Traefik sends `/api`, including the party WebSocket, to FastAPI, and every other path to nginx. uvicorn speaks WebSocket through the `websockets` package, with `--ws websockets-sansio` in `entrypoint.sh`. nginx serves the built client. Telegram posts bot updates to `/api/telegram/webhook`. FastAPI calls the Bot API.
+Traefik sends `/api`, including the party WebSocket, to FastAPI, and every other path to nginx. uvicorn speaks WebSocket through the `websockets` package, with `--ws websockets-sansio` in `entrypoint.sh`. nginx serves the built client. Telegram posts bot updates to `/api/telegram/webhook`. FastAPI calls the Bot API. When a game is completed, the request reads who gets a message: the other party members, and the player pushed out of the Top 10. The messages go out after the response, so a restart drops the ones not sent yet.
 
 ```mermaid
 flowchart LR
