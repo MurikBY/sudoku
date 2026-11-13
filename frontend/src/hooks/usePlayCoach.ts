@@ -12,6 +12,21 @@ type CoachEpisode = {
   fingerprint: string;
 };
 
+function strengthenedEpisode(episode: CoachEpisode): CoachEpisode | null {
+  if (episode.level >= coachMaxLevel(episode.hint)) {
+    return null;
+  }
+  return { ...episode, level: (episode.level + 1) as 1 | 2 | 3 };
+}
+
+function episodeFromHint(result: HintResponse): CoachEpisode {
+  return {
+    hint: coachHintFromResponse(result),
+    level: 1,
+    fingerprint: coachEpisodeFingerprint(result.current_grid, result.notes),
+  };
+}
+
 type UsePlayCoachArgs = {
   game: Game;
   applyCoachHint: (elapsedSeconds: number) => Promise<HintResponse | null>;
@@ -32,11 +47,10 @@ export function usePlayCoach({
   const [coachEpisode, setCoachEpisode] = useState<CoachEpisode | null>(null);
   const [coachOpen, setCoachOpen] = useState(false);
   const coachFingerprint = coachEpisodeFingerprint(game.current_grid, game.notes);
-  if (coachEpisode !== null && coachEpisode.fingerprint !== coachFingerprint) {
-    setCoachEpisode(null);
-    setCoachOpen(false);
-  }
-  if (game.lesson_objective_met === true && (coachEpisode !== null || coachOpen)) {
+  // An episode belongs to one board: any edit, or a met lesson objective, ends it.
+  const episodeIsStale = coachEpisode !== null && coachEpisode.fingerprint !== coachFingerprint;
+  const lessonDone = game.lesson_objective_met === true && (coachEpisode !== null || coachOpen);
+  if (episodeIsStale || lessonDone) {
     setCoachEpisode(null);
     setCoachOpen(false);
   }
@@ -45,25 +59,22 @@ export function usePlayCoach({
     setCoachOpen(false);
   }, []);
 
+  const resetCoach = useCallback(() => {
+    setCoachOpen(false);
+    setCoachEpisode(null);
+  }, []);
+
   function handleStrengthenHint() {
-    if (coachEpisode === null) {
-      return;
+    const next = coachEpisode === null ? null : strengthenedEpisode(coachEpisode);
+    if (next !== null) {
+      setCoachEpisode(next);
     }
-    const maxLevel = coachMaxLevel(coachEpisode.hint);
-    if (coachEpisode.level >= maxLevel) {
-      return;
-    }
-    setCoachEpisode({
-      ...coachEpisode,
-      level: (coachEpisode.level + 1) as 1 | 2 | 3,
-    });
   }
 
   const handleHint = useCallback(async () => {
     resumeIfPaused();
     if (game.lesson_objective_met === true) {
-      setCoachOpen(false);
-      setCoachEpisode(null);
+      resetCoach();
       return;
     }
     if (coachOpen) {
@@ -82,15 +93,10 @@ export function usePlayCoach({
     }
     applyServerElapsed(result, setElapsedFromServer);
     if (result.lesson_objective_met === true) {
-      setCoachOpen(false);
-      setCoachEpisode(null);
+      resetCoach();
       return;
     }
-    setCoachEpisode({
-      hint: coachHintFromResponse(result),
-      level: 1,
-      fingerprint: coachEpisodeFingerprint(result.current_grid, result.notes),
-    });
+    setCoachEpisode(episodeFromHint(result));
     setCoachOpen(true);
   }, [
     applyCoachHint,
@@ -100,16 +106,11 @@ export function usePlayCoach({
     game.lesson_objective_met,
     game.notes,
     getElapsedSeconds,
+    resetCoach,
     resumeIfPaused,
     selectCell,
     setElapsedFromServer,
   ]);
 
-  return {
-    coachEpisode,
-    coachOpen,
-    dismissCoachCard,
-    handleStrengthenHint,
-    handleHint,
-  };
+  return { coachEpisode, coachOpen, dismissCoachCard, handleStrengthenHint, handleHint };
 }
