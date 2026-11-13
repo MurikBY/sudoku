@@ -18,6 +18,16 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
+    ignore:
+      # TypeScript 7: openapi-typescript 7.13 does not accept it yet.
+      - dependency-name: typescript
+        update-types: ["version-update:semver-major"]
+      # plugin-react 6 needs a newer Vite major than this project runs.
+      - dependency-name: "@vitejs/plugin-react"
+        update-types: ["version-update:semver-major"]
+      # Node types follow the Node runtime, which moves by hand.
+      - dependency-name: "@types/node"
+        update-types: ["version-update:semver-major"]
     groups:
       minor-and-patch:
         patterns:
@@ -44,6 +54,10 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
+    ignore:
+      # A new Python needs wheels for every compiled dependency, so the runtime moves by hand.
+      - dependency-name: python
+        update-types: ["version-update:semver-major", "version-update:semver-minor"]
     groups:
       minor-and-patch:
         patterns:
@@ -57,6 +71,10 @@ updates:
     schedule:
       interval: weekly
     open-pull-requests-limit: 5
+    ignore:
+      # The Node runtime moves by hand, together with CI and @types/node.
+      - dependency-name: node
+        update-types: ["version-update:semver-major"]
     groups:
       minor-and-patch:
         patterns:
