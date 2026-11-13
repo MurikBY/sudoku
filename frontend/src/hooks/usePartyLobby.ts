@@ -1,26 +1,20 @@
-import { useCallback, useEffect, useReducer, useRef } from "react";
+import { useCallback, useReducer } from "react";
 
-import { fetchGame } from "@/api/games";
-import type { Difficulty, Game, Party, PartyAssists, PartyWsEvent } from "@/api/types";
-import { partyActionErrorMessage } from "@/hooks/partyActionErrorMessage";
+import type { Difficulty, Party } from "@/api/types";
 import {
   initialPartyLobbyState,
   partyLobbyReducer,
   type PartyLobbyPhase,
 } from "@/hooks/partyLobbyState";
 import { useLobbyPoll } from "@/hooks/useLobbyPoll";
-import { usePartyLobbyActions } from "@/hooks/usePartyLobbyActions";
+import { usePartyLobbyControls } from "@/hooks/usePartyLobbyControls";
+import { usePartyLobbyEntry } from "@/hooks/usePartyLobbyEntry";
+import { usePartyLobbySocket } from "@/hooks/usePartyLobbySocket";
 import { usePartySocket } from "@/hooks/usePartySocket";
-import { formatApiErrorMessage } from "@/lib/api/apiError";
+import { usePartyStartHandoff, type PartyStartedPayload } from "@/hooks/usePartyStartHandoff";
 import type { GameAssists } from "@/lib/play/gameSettings";
-import { assistsFromPayload } from "@/lib/play/preferencesSync";
 
 export type { PartyLobbyPhase };
-
-type PartyStartedPayload = {
-  game: Game;
-  assists: GameAssists;
-};
 
 type UsePartyLobbyArgs = {
   difficulty: Difficulty;
@@ -36,87 +30,24 @@ export function usePartyLobby({
   onStarted,
 }: UsePartyLobbyArgs) {
   const [lobby, dispatch] = useReducer(partyLobbyReducer, initialPartyLobbyState);
-  const { open, phase, party, members, joinCode, joinedOk, busy, error } = lobby;
+  const { open, phase, party, joinCode, joinedOk } = lobby;
   const { connect: connectPartySocket, disconnect: disconnectSocket } = usePartySocket();
-  const startedHandledRef = useRef(false);
-  const onStartedRef = useRef(onStarted);
-
-  useEffect(() => {
-    onStartedRef.current = onStarted;
-  }, [onStarted]);
+  const { handleStarted, rearmStart } = usePartyStartHandoff({
+    dispatch,
+    disconnectSocket,
+    onStarted,
+  });
+  const { connectSocket, markLobbyClosedByHost } = usePartyLobbySocket({
+    dispatch,
+    connectPartySocket,
+    disconnectSocket,
+    handleStarted,
+    rearmStart,
+  });
 
   const applyPartySnapshot = useCallback((snapshot: Party) => {
     dispatch({ type: "applySnapshot", party: snapshot });
   }, []);
-
-  // The socket, the poll, and the start response can all report the start; the first one wins.
-  const handleStarted = useCallback(
-    async (gameId: string, partyAssists: PartyAssists) => {
-      if (startedHandledRef.current) {
-        return;
-      }
-      startedHandledRef.current = true;
-      dispatch({ type: "setBusy", busy: true });
-      dispatch({ type: "clearError" });
-      try {
-        const game = await fetchGame(gameId);
-        disconnectSocket();
-        dispatch({ type: "close" });
-        onStartedRef.current({
-          game,
-          assists: assistsFromPayload(partyAssists),
-        });
-      } catch (err) {
-        startedHandledRef.current = false;
-        dispatch({ type: "setError", error: formatApiErrorMessage(err) });
-      } finally {
-        dispatch({ type: "setBusy", busy: false });
-      }
-    },
-    [disconnectSocket],
-  );
-
-  const markLobbyClosedByHost = useCallback(() => {
-    disconnectSocket();
-    dispatch({ type: "closedByHost" });
-  }, [disconnectSocket]);
-
-  const handlePartyEvent = useCallback(
-    (event: PartyWsEvent) => {
-      if (event.type === "members") {
-        dispatch({
-          type: "membersEvent",
-          members: event.members,
-          status: event.status,
-          difficulty: event.difficulty,
-        });
-        return;
-      }
-      if (event.type === "started") {
-        void handleStarted(event.game_id, event.assists);
-        return;
-      }
-      if (event.type === "cancelled") {
-        markLobbyClosedByHost();
-      }
-    },
-    [handleStarted, markLobbyClosedByHost],
-  );
-
-  const reportTicketError = useCallback((err: unknown) => {
-    const message = partyActionErrorMessage(err);
-    if (message) {
-      dispatch({ type: "setError", error: message });
-    }
-  }, []);
-
-  const connectSocket = useCallback(
-    (partyId: string) => {
-      startedHandledRef.current = false;
-      connectPartySocket(partyId, { onEvent: handlePartyEvent, onTicketError: reportTicketError });
-    },
-    [connectPartySocket, handlePartyEvent, reportTicketError],
-  );
 
   const waitingInLobby =
     party !== null &&
@@ -133,14 +64,19 @@ export function usePartyLobby({
     onClosedByHost: markLobbyClosedByHost,
   });
 
-  const actions = usePartyLobbyActions({
+  const entry = usePartyLobbyEntry({
     dispatch,
-    party,
     joinCode,
     difficulty,
     assists,
-    onDifficultyChange,
     connectSocket,
+    handleStarted,
+  });
+  const controls = usePartyLobbyControls({
+    dispatch,
+    party,
+    difficulty,
+    onDifficultyChange,
     disconnectSocket,
     handleStarted,
   });
@@ -157,13 +93,14 @@ export function usePartyLobby({
     open,
     phase,
     party,
-    members,
+    members: lobby.members,
     joinCode,
     setJoinCode: (nextCode: string) => dispatch({ type: "setJoinCode", joinCode: nextCode }),
     joinedOk,
-    busy,
-    error,
-    ...actions,
+    busy: lobby.busy,
+    error: lobby.error,
+    ...entry,
+    ...controls,
     closeLobby,
     dismissClosedLobby,
     clearError: () => dispatch({ type: "clearError" }),
