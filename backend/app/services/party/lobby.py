@@ -122,9 +122,6 @@ async def _announce_left_parties(
     party_ids: list[uuid.UUID],
 ) -> None:
     for party_id in party_ids:
-        left = await session.get(Party, party_id)
-        if left is None:
-            continue
         left = await load_party(session, party_id)
         if left.status == PartyStatus.cancelled:
             await _announce_cancelled(left)
