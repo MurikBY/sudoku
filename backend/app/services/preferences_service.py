@@ -45,5 +45,4 @@ async def update_user_preferences(
     )
     user.preferences = preferences.model_dump(mode="json")
     await session.commit()
-    await session.refresh(user)
     return preferences
