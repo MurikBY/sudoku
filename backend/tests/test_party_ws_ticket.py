@@ -12,6 +12,7 @@ from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from starlette.websockets import WebSocketState
 
 from app.api.ws_parties import party_websocket
+from app.services.party.errors import PartyForbidden
 from app.services.party_ws_hub import party_ws_hub
 from app.services.party_ws_ticket import (
     TICKET_TTL_SECONDS,
@@ -154,3 +155,34 @@ async def test_ws_ticket_rejected_for_other_party(
     assert rejected.events == []
     with pytest.raises(PartyWsTicketRejected, match="missing"):
         party_ws_tickets.consume(issued.json()["ticket"], party_id)
+
+
+@pytest.mark.asyncio
+async def test_member_gone_after_the_ticket_check_is_closed_with_4401(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    party_id = uuid.uuid4()
+    ticket = party_ws_tickets.issue(party_id, 804)
+    reads: list[str] = []
+
+    async def member_until_second_read(_session, _party_id, _user_id):
+        reads.append("read")
+        if len(reads) > 1:
+            raise PartyForbidden(f"not a member of party: {party_id}")
+
+    class _UnusedSession:
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *_args) -> None:
+            return None
+
+    monkeypatch.setattr("app.api.ws_parties.get_party_for_member", member_until_second_read)
+    monkeypatch.setattr("app.api.ws_parties.open_session", _UnusedSession)
+
+    probe = await _open_socket(party_id, ticket)
+
+    assert reads == ["read", "read"]
+    assert probe.close_code == 4401
+    assert probe.events == []
+    assert party_id not in party_ws_hub._rooms

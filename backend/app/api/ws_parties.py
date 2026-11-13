@@ -11,6 +11,8 @@ from app.services.party_ws_ticket import PartyWsTicketRejected, party_ws_tickets
 
 router = APIRouter(tags=["parties-ws"])
 
+REJECTED_CLOSE_CODE = 4401
+
 
 @router.websocket("/api/ws/parties/{party_id}")
 async def party_websocket(
@@ -24,19 +26,28 @@ async def party_websocket(
             await get_party_for_member(session, party_id, user_id)
     except (PartyWsTicketRejected, PartyNotFound, PartyForbidden):
         await websocket.accept()
-        await websocket.close(code=4401)
+        await websocket.close(code=REJECTED_CLOSE_CODE)
         return
 
     await party_ws_hub.connect(party_id, user_id, websocket)
+    try:
+        await _serve_member(websocket, party_id, user_id)
+    finally:
+        await party_ws_hub.disconnect(party_id, websocket)
+
+
+async def _serve_member(websocket: WebSocket, party_id: uuid.UUID, user_id: int) -> None:
     try:
         async with open_session() as session:
             snapshot = party_members_event(
                 await get_party_for_member(session, party_id, user_id),
             )
-        await party_ws_hub.send_to_socket(party_id, websocket, snapshot)
-        await _wait_for_disconnect(websocket)
-    finally:
-        await party_ws_hub.disconnect(party_id, websocket)
+    except (PartyNotFound, PartyForbidden):
+        # The member left between the ticket check and this read.
+        await party_ws_hub.close_socket(party_id, websocket, REJECTED_CLOSE_CODE)
+        return
+    await party_ws_hub.send_to_socket(party_id, websocket, snapshot)
+    await _wait_for_disconnect(websocket)
 
 
 async def _wait_for_disconnect(websocket: WebSocket) -> None:

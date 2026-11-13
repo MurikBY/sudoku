@@ -52,12 +52,21 @@ class PartyWsHub:
         async with self._lock:
             sockets = self._user_sockets(party_id, user_id)
             self._forget(party_id, sockets)
-        await asyncio.gather(*(_close_socket(websocket) for websocket in sockets))
+        await asyncio.gather(
+            *(_close_socket(websocket, LOBBY_CLOSED_CODE) for websocket in sockets),
+        )
+
+    async def close_socket(self, party_id: UUID, websocket: WebSocket, code: int) -> None:
+        async with self._lock:
+            self._forget(party_id, [websocket])
+        await _close_socket(websocket, code)
 
     async def close_room(self, party_id: UUID) -> None:
         async with self._lock:
             sockets = list(self._rooms.pop(party_id, {}))
-        await asyncio.gather(*(_close_socket(websocket) for websocket in sockets))
+        await asyncio.gather(
+            *(_close_socket(websocket, LOBBY_CLOSED_CODE) for websocket in sockets),
+        )
 
     def _user_sockets(self, party_id: UUID, user_id: int) -> list[WebSocket]:
         return [
@@ -104,12 +113,12 @@ async def _send_text(websocket: WebSocket, payload: str) -> bool:
     return True
 
 
-async def _close_socket(websocket: WebSocket) -> None:
+async def _close_socket(websocket: WebSocket, code: int) -> None:
     if websocket.application_state is not WebSocketState.CONNECTED:
         return
     try:
         async with asyncio.timeout(SOCKET_WRITE_TIMEOUT_SECONDS):
-            await websocket.close(code=LOBBY_CLOSED_CODE)
+            await websocket.close(code=code)
     except TimeoutError:
         logger.warning("party ws close timed out")
     except Exception:
