@@ -315,9 +315,14 @@ def _close_deepen_round(
     return _RoundOutcome(puzzle, grade, has_medium, False)
 
 
+def _shuffled_given_indices(puzzle: str, rng: random.Random) -> list[int]:
+    given_indices = [index for index, digit in enumerate(puzzle) if digit != "0"]
+    rng.shuffle(given_indices)
+    return given_indices
+
+
 def _deepen_one_round(current: Candidate, ctx: DeepenContext) -> _RoundOutcome:
-    given_indices = [index for index, digit in enumerate(current.puzzle) if digit != "0"]
-    ctx.rng.shuffle(given_indices)
+    given_indices = _shuffled_given_indices(current.puzzle, ctx.rng)
     improved = False
     probes_used = 0
     hard_only_round = True

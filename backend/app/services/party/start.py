@@ -3,6 +3,7 @@ import uuid
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.enums import Difficulty, PartyStatus
+from app.models.party import Party
 from app.models.user import User
 from app.schemas.party import StartPartyResponse
 from app.schemas.preferences import GameAssistsPayload
@@ -24,10 +25,7 @@ async def start_party(
     difficulty: Difficulty,
 ) -> StartPartyResponse:
     party = await load_party(session, party_id, for_update=True)
-    if party.host_user_id != host.id:
-        raise PartyForbidden(f"only host can start party: {party_id}")
-    if party.status != PartyStatus.waiting:
-        raise PartyNotWaiting(f"party is not waiting: {party.id}")
+    _require_startable(party, host)
 
     party.difficulty = difficulty
     generated = await puzzle_pool_service.take_puzzle_for_play(
@@ -35,14 +33,42 @@ async def start_party(
         party.difficulty,
         taker_id=host.id,
     )
-
     party.puzzle = generated.puzzle
     party.solution = generated.solution
     party.givens_count = generated.givens_count
+    game_ids_by_user = await _create_member_games(session, party, generated)
 
-    host_game_id: uuid.UUID | None = None
+    party.status = PartyStatus.started
+    party.started_at = clock.utcnow()
+    await session.commit()
+    party = await load_party(session, party.id)
+    host_game_id = game_ids_by_user.get(host.id)
+    if host_game_id is None:
+        raise RuntimeError("host game missing after party start")
+
+    for user_id, game_id in game_ids_by_user.items():
+        await party_ws_hub.send_to_user(party.id, user_id, party_started_event(party, game_id))
+
+    return StartPartyResponse(
+        party=party_to_response(party, host.id),
+        game_id=host_game_id,
+    )
+
+
+def _require_startable(party: Party, host: User) -> None:
+    if party.host_user_id != host.id:
+        raise PartyForbidden(f"only host can start party: {party.id}")
+    if party.status != PartyStatus.waiting:
+        raise PartyNotWaiting(f"party is not waiting: {party.id}")
+
+
+async def _create_member_games(
+    session: AsyncSession,
+    party: Party,
+    generated: GeneratedPuzzle,
+) -> dict[int, uuid.UUID]:
+    # Every member gets the same puzzle and the lobby's assists, and leaves any running game.
     game_ids_by_user: dict[int, uuid.UUID] = {}
-
     for member in sorted(party.members, key=lambda item: item.joined_at):
         user = await session.get(User, member.user_id)
         if user is None:
@@ -64,20 +90,4 @@ async def start_party(
         await session.flush()
         member.game_id = game.id
         game_ids_by_user[user.id] = game.id
-        if user.id == host.id:
-            host_game_id = game.id
-
-    party.status = PartyStatus.started
-    party.started_at = clock.utcnow()
-    await session.commit()
-    party = await load_party(session, party.id)
-    if host_game_id is None:
-        raise RuntimeError("host game missing after party start")
-
-    for user_id, game_id in game_ids_by_user.items():
-        await party_ws_hub.send_to_user(party.id, user_id, party_started_event(party, game_id))
-
-    return StartPartyResponse(
-        party=party_to_response(party, host.id),
-        game_id=host_game_id,
-    )
+    return game_ids_by_user

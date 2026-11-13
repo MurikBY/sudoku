@@ -3,9 +3,11 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta
 from decimal import Decimal
 from enum import StrEnum
+from typing import Any
 
-from sqlalchemy import case, func, select
+from sqlalchemy import Case, ColumnElement, Row, case, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import InstrumentedAttribute
 
 from app.models.enums import Difficulty, GameStatus
 from app.models.game import SCORED_GAME, Game
@@ -117,85 +119,56 @@ async def _aggregates_by_difficulty(
     ]
     if started_at_cutoff is not None:
         conditions.append(Game.started_at >= started_at_cutoff)
-
     result = await session.execute(
-        select(
-            Game.difficulty,
-            func.count().label("games_started"),
-            func.count().filter(Game.status == GameStatus.completed).label("games_completed"),
-            func.count().filter(FINISHED).label("games_finished"),
-            func.count().filter(CLEAN_WIN).label("clean_wins"),
-            func.coalesce(
-                func.sum(Game.elapsed_seconds),
-                0,
-            ).label("total_play_seconds"),
-            func.avg(
-                case(
-                    (Game.status == GameStatus.completed, Game.elapsed_seconds),
-                    else_=None,
-                ),
-            ).label("avg_completion_seconds"),
-            func.min(
-                case(
-                    (Game.status == GameStatus.completed, Game.elapsed_seconds),
-                    else_=None,
-                ),
-            ).label("best_time_seconds"),
-            func.min(
-                case(
-                    (CLEAN_WIN, Game.elapsed_seconds),
-                    else_=None,
-                ),
-            ).label("best_time_clean_seconds"),
-            func.avg(
-                case(
-                    (CLEAN_WIN, Game.elapsed_seconds),
-                    else_=None,
-                ),
-            ).label("avg_clean_seconds"),
-            func.avg(
-                case(
-                    (FINISHED, Game.hints_count),
-                    else_=None,
-                ),
-            ).label("avg_hints"),
-            func.avg(
-                case(
-                    (FINISHED, Game.pencil_count),
-                    else_=None,
-                ),
-            ).label("avg_pencil"),
-        )
-        .where(*conditions)
-        .group_by(Game.difficulty),
+        select(Game.difficulty, *_aggregate_columns()).where(*conditions).group_by(Game.difficulty),
     )
-
     aggregates = {difficulty: _empty_aggregate() for difficulty in DIFFICULTIES}
     for row in result:
-        aggregates[row.difficulty] = _DifficultyAggregate(
-            games_started=row.games_started,
-            games_completed=row.games_completed,
-            games_finished=row.games_finished,
-            clean_wins=row.clean_wins,
-            total_play_seconds=int(row.total_play_seconds),
-            avg_completion_seconds=(
-                int(row.avg_completion_seconds) if row.avg_completion_seconds is not None else None
-            ),
-            best_time_seconds=(
-                int(row.best_time_seconds) if row.best_time_seconds is not None else None
-            ),
-            best_time_clean_seconds=(
-                int(row.best_time_clean_seconds)
-                if row.best_time_clean_seconds is not None
-                else None
-            ),
-            avg_clean_seconds=(
-                int(row.avg_clean_seconds) if row.avg_clean_seconds is not None else None
-            ),
-            avg_hints=_optional_avg(row.avg_hints),
-            avg_pencil=_optional_avg(row.avg_pencil),
-        )
+        aggregates[row.difficulty] = _aggregate_from_row(row)
     return aggregates
+
+
+def _when(condition: ColumnElement[bool], column: InstrumentedAttribute[int]) -> Case[int]:
+    return case((condition, column), else_=None)
+
+
+def _aggregate_columns() -> tuple[ColumnElement[Any], ...]:
+    completed = Game.status == GameStatus.completed
+    return (
+        func.count().label("games_started"),
+        func.count().filter(completed).label("games_completed"),
+        func.count().filter(FINISHED).label("games_finished"),
+        func.count().filter(CLEAN_WIN).label("clean_wins"),
+        func.coalesce(func.sum(Game.elapsed_seconds), 0).label("total_play_seconds"),
+        func.avg(_when(completed, Game.elapsed_seconds)).label("avg_completion_seconds"),
+        func.min(_when(completed, Game.elapsed_seconds)).label("best_time_seconds"),
+        func.min(_when(CLEAN_WIN, Game.elapsed_seconds)).label("best_time_clean_seconds"),
+        func.avg(_when(CLEAN_WIN, Game.elapsed_seconds)).label("avg_clean_seconds"),
+        func.avg(_when(FINISHED, Game.hints_count)).label("avg_hints"),
+        func.avg(_when(FINISHED, Game.pencil_count)).label("avg_pencil"),
+    )
+
+
+def _aggregate_from_row(row: Row[Any]) -> _DifficultyAggregate:
+    return _DifficultyAggregate(
+        games_started=row.games_started,
+        games_completed=row.games_completed,
+        games_finished=row.games_finished,
+        clean_wins=row.clean_wins,
+        total_play_seconds=int(row.total_play_seconds),
+        avg_completion_seconds=_optional_seconds(row.avg_completion_seconds),
+        best_time_seconds=_optional_seconds(row.best_time_seconds),
+        best_time_clean_seconds=_optional_seconds(row.best_time_clean_seconds),
+        avg_clean_seconds=_optional_seconds(row.avg_clean_seconds),
+        avg_hints=_optional_avg(row.avg_hints),
+        avg_pencil=_optional_avg(row.avg_pencil),
+    )
+
+
+def _optional_seconds(value: Decimal | int | None) -> int | None:
+    if value is None:
+        return None
+    return int(value)
 
 
 def _stats_by_difficulty(

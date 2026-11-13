@@ -43,17 +43,25 @@ def main() -> int:
     args = parser.parse_args()
 
     buckets: dict[str, list[LessonPosition]] = {name: [] for name in LESSON_TECHNIQUES}
-    deadline = time.monotonic() + args.max_seconds
     rng = random.Random(args.seed)
-
     for puzzle in SEED_PUZZLES:
         _collect_from_puzzle(puzzle, buckets)
         _print_counts(buckets)
+    _collect_from_carved_puzzles(buckets, rng, time.monotonic() + args.max_seconds)
+    _require_every_technique(buckets)
+    _write_pools(buckets, rng)
+    return 0
 
+
+def _collect_from_carved_puzzles(
+    buckets: dict[str, list[LessonPosition]],
+    rng: random.Random,
+    deadline: float,
+) -> None:
     carved = 0
     while time.monotonic() < deadline:
         if all(buckets[name] for name in LESSON_TECHNIQUES):
-            break
+            return
         solution = generate_complete_grid(rng)
         puzzle = carve_puzzle(solution, rng, min_givens=17)
         before = _missing(buckets)
@@ -67,18 +75,21 @@ def main() -> int:
             )
             _print_counts(buckets)
 
+
+def _require_every_technique(buckets: dict[str, list[LessonPosition]]) -> None:
     missing = _missing(buckets)
     empty = {name: count for name, count in missing.items() if count == LESSON_POOL_SIZE}
     if empty:
         raise SystemExit(f"lesson harvest found no snapshots for: {sorted(empty)}")
 
+
+def _write_pools(buckets: dict[str, list[LessonPosition]], rng: random.Random) -> None:
     print("expanding pools", flush=True)
     for technique, snapshots in buckets.items():
         print(f"expand {technique} from {len(snapshots)}", flush=True)
         filled = expand_lesson_pool(snapshots, rng)
         path = write_lesson_pool(technique, assign_pool(technique, filled))
         print(f"wrote {path} from {len(snapshots)} harvested")
-    return 0
 
 
 def _collect_from_puzzle(

@@ -62,9 +62,11 @@ known-third-party = ["alembic"]
 
 [tool.ruff.lint.pylint]
 max-args = 6
+max-statements = 25
 
 [tool.ruff.lint.per-file-ignores]
-"alembic/versions/*" = ["I"]
+# Applied migrations are never edited, so their import order and length are frozen.
+"alembic/versions/*" = ["I", "PLR0915"]
 "tests/**" = ["ARG001", "PLR0913", "PLR0915"]
 
 [tool.mypy]
