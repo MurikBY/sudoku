@@ -1,6 +1,8 @@
-import { useCallback, useEffect, useRef, type RefObject } from "react";
+import { useCallback, type RefObject } from "react";
 
 import { type CellNotesMap, type Game } from "@/api/types";
+import { useDigitEntry } from "@/hooks/useDigitEntry";
+import { useLatestBoardCells } from "@/hooks/useLatestBoardCells";
 import { applyServerElapsed } from "@/lib/play/applyServerElapsed";
 import {
   cellDigitValue,
@@ -57,6 +59,30 @@ type UseBoardInputArgs = {
   prepareGesture: () => void;
 };
 
+// Clear removes notes in pencil mode or from a cell that has only notes, and the digit otherwise.
+function clearTarget(
+  cells: UseBoardInputArgs["cells"],
+  cellIndex: number,
+  isPencilMode: boolean,
+  mistakes: Pick<UseBoardInputArgs["mistakes"], "feedback" | "wrongDigitIndices">,
+): "notes" | "digit" | "locked" {
+  const { puzzle, currentGrid, notes } = cells;
+  if (
+    isCorrectDigitLocked(
+      puzzle,
+      currentGrid,
+      cellIndex,
+      mistakes.wrongDigitIndices,
+      mistakes.feedback,
+    )
+  ) {
+    return "locked";
+  }
+  const hasDigit = cellDigitValue(currentGrid, cellIndex) !== null;
+  const hasNotes = notesForCell(notes, cellIndex).length > 0;
+  return isPencilMode || (!hasDigit && hasNotes) ? "notes" : "digit";
+}
+
 export function useBoardInput({
   gates,
   selection,
@@ -69,54 +95,12 @@ export function useBoardInput({
 }: UseBoardInputArgs) {
   const { canUsePad, canClear, padCompletedDigits } = gates;
   const { selectedIndex, isPencilMode } = selection;
-  const { puzzle, currentGrid, notes } = cells;
-  const { feedback, wrongDigitIndices, trigger } = mistakes;
+  const { puzzle, currentGrid } = cells;
   const { applyMove, toggleNote, clearNotes, undoLastMove, selectCell } = commands;
   const { getElapsedSeconds, setElapsedFromServer } = elapsed;
-  const puzzleRef = useRef(puzzle);
-  const currentGridRef = useRef(currentGrid);
-  const pencilModeRef = useRef(isPencilMode);
-
-  useEffect(() => {
-    puzzleRef.current = puzzle;
-    currentGridRef.current = currentGrid;
-    pencilModeRef.current = isPencilMode;
-  }, [currentGrid, isPencilMode, puzzle]);
-
-  const applyDigitAtCell = useCallback(
-    async (digit: number, cellIndex: number) => {
-      if (pencilModeRef.current) {
-        const result = await toggleNote(digit, getElapsedSeconds(), cellIndex);
-        applyServerElapsed(result, setElapsedFromServer);
-        return;
-      }
-      if (
-        isCorrectDigitLocked(
-          puzzleRef.current,
-          currentGridRef.current,
-          cellIndex,
-          wrongDigitIndices,
-          feedback,
-        )
-      ) {
-        return;
-      }
-      const result = await applyMove(digit, getElapsedSeconds(), cellIndex);
-      if (feedback && result && "is_mistake" in result && result.is_mistake) {
-        trigger(cellIndex);
-      }
-      applyServerElapsed(result, setElapsedFromServer);
-    },
-    [
-      applyMove,
-      feedback,
-      getElapsedSeconds,
-      setElapsedFromServer,
-      toggleNote,
-      trigger,
-      wrongDigitIndices,
-    ],
-  );
+  const latest = useLatestBoardCells(puzzle, currentGrid, isPencilMode);
+  const { puzzleRef, currentGridRef } = latest;
+  const applyDigitAtCell = useDigitEntry({ latest, mistakes, applyMove, toggleNote, elapsed });
 
   const handleUndo = useCallback(async () => {
     prepareGesture();
@@ -165,24 +149,16 @@ export function useBoardInput({
     if (selectedIndex === null) {
       return;
     }
-    if (isCorrectDigitLocked(puzzle, currentGrid, selectedIndex, wrongDigitIndices, feedback)) {
+    const target = clearTarget(cells, selectedIndex, isPencilMode, mistakes);
+    if (target === "locked") {
       return;
     }
-    const hasDigit = cellDigitValue(currentGrid, selectedIndex) !== null;
-    const hasNotes = notesForCell(notes, selectedIndex).length > 0;
-    if (isPencilMode || (!hasDigit && hasNotes)) {
-      const result = await clearNotes(getElapsedSeconds());
-      applyServerElapsed(result, setElapsedFromServer);
-      return;
-    }
-    const result = await applyMove(0, getElapsedSeconds());
+    const result =
+      target === "notes"
+        ? await clearNotes(getElapsedSeconds())
+        : await applyMove(0, getElapsedSeconds());
     applyServerElapsed(result, setElapsedFromServer);
   }
 
-  return {
-    handlePick,
-    handleClear,
-    handleSelectCell,
-    handleUndo,
-  };
+  return { handlePick, handleClear, handleSelectCell, handleUndo };
 }
