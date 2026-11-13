@@ -1,13 +1,10 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 
-import { abandonGame, createGame, syncGameProgress } from "@/api/games";
-import type { Difficulty, Game } from "@/api/types";
+import type { Game } from "@/api/types";
 import { boardReducer, initialBoardState } from "@/hooks/boardState";
 import { useBoardMoves } from "@/hooks/useBoardMoves";
 import { useNotes } from "@/hooks/useNotes";
 import { useUndo } from "@/hooks/useUndo";
-import { formatApiErrorMessage } from "@/lib/api/apiError";
-import { bestEffort } from "@/lib/api/bestEffort";
 
 type UseGameOptions = {
   initialGame: Game;
@@ -17,8 +14,6 @@ type UseGameOptions = {
 
 export function useGame({ initialGame, onGameStateChanged, onCellsFlash }: UseGameOptions) {
   const [board, dispatch] = useReducer(boardReducer, initialGame, initialBoardState);
-  const [isCreatingGame, setIsCreatingGame] = useState(false);
-  const [isGivingUp, setIsGivingUp] = useState(false);
   const [isMovePending, setIsMovePending] = useState(false);
   const [isHintPending, setIsHintPending] = useState(false);
   const [isNotesPending, setIsNotesPending] = useState(false);
@@ -95,61 +90,6 @@ export function useGame({ initialGame, onGameStateChanged, onCellsFlash }: UseGa
     setUndoPending: setIsUndoPending,
   });
 
-  const startNewGame = useCallback(
-    async (difficulty: Difficulty) => {
-      setIsCreatingGame(true);
-      dispatch({ type: "clearError" });
-      try {
-        if (board.game.status === "in_progress") {
-          await bestEffort("create_game abandons using last synced elapsed", () =>
-            syncGameProgress(board.game.id, board.game.elapsed_seconds),
-          );
-        }
-        const newGame = await createGame(difficulty);
-        dispatch({ type: "storeGame", game: newGame });
-        dispatch({ type: "clearSelection" });
-        dispatch({ type: "setPencil", pencil: false });
-        dispatch({ type: "setPhase", phase: "playing" });
-        notifyGameStateChanged();
-        return newGame;
-      } catch (createError) {
-        dispatch({ type: "setError", error: formatApiErrorMessage(createError) });
-        return null;
-      } finally {
-        setIsCreatingGame(false);
-      }
-    },
-    [
-      board.game.elapsed_seconds,
-      board.game.id,
-      board.game.status,
-      dispatch,
-      notifyGameStateChanged,
-    ],
-  );
-
-  const giveUpGame = useCallback(
-    async (elapsedSeconds: number) => {
-      if (board.game.status !== "in_progress") {
-        return false;
-      }
-      setIsGivingUp(true);
-      dispatch({ type: "clearError" });
-      try {
-        await abandonGame(board.game.id, elapsedSeconds);
-        dispatch({ type: "clearSelection" });
-        notifyGameStateChanged();
-        return true;
-      } catch (giveUpError) {
-        dispatch({ type: "setError", error: formatApiErrorMessage(giveUpError) });
-        return false;
-      } finally {
-        setIsGivingUp(false);
-      }
-    },
-    [board.game, dispatch, notifyGameStateChanged],
-  );
-
   const selectCell = useCallback((index: number | null) => {
     dispatch({ type: "select", index });
   }, []);
@@ -170,16 +110,12 @@ export function useGame({ initialGame, onGameStateChanged, onCellsFlash }: UseGa
       canUndo: board.game.undo_count > 0,
     },
     pending: {
-      isCreatingGame,
-      isGivingUp,
       isMovePending,
       isHintPending,
       isNotesPending,
       isUndoPending,
     },
     actions: {
-      startNewGame,
-      giveUpGame,
       selectCell,
       togglePencilMode,
       applyMove,
