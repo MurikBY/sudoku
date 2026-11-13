@@ -84,7 +84,7 @@ Migration `018` creates `rating_counter_archive` and seeds one row per difficult
 
 ## What would change at 100,000 users
 
-`games` is indexed on `user_id`, `party_id`, `share_code`, `is_analysis`, and `is_lesson`. There is no index on `difficulty` or `status`.
+`games` is indexed on `user_id`, `party_id`, `share_code`, `is_analysis`, `is_lesson`, and `analysis_source_game_id`. `party_members` is indexed on `user_id` and `game_id` beside its `(party_id, user_id)` key. There is no index on `difficulty` or `status`.
 
 A player's own stats filter by `user_id`. The rating page does not. `rating_summaries_by_difficulty` counts and sums every scored game, grouped by difficulty, on each read, then adds the archive. The clean-best list groups every clean win of a difficulty by user (`min(elapsed_seconds)`) and then keeps 10 rows. The rank counts every user with a better time, so that grouped set is read even though the page shows 10.
 

@@ -54,7 +54,12 @@ class PartyMember(Base):
         ForeignKey("parties.id", ondelete="CASCADE"),
         primary_key=True,
     )
-    user_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("users.id"), primary_key=True)
+    user_id: Mapped[int] = mapped_column(
+        BigInteger,
+        ForeignKey("users.id"),
+        primary_key=True,
+        index=True,
+    )
     display_name: Mapped[str] = mapped_column(Text, nullable=False)
     joined_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
@@ -63,6 +68,7 @@ class PartyMember(Base):
     game_id: Mapped[uuid.UUID | None] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("games.id"),
+        index=True,
     )
 
     party: Mapped[Party] = relationship(back_populates="members")

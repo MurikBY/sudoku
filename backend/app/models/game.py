@@ -44,6 +44,7 @@ class Game(Base):
         UUID(as_uuid=True),
         ForeignKey("games.id", ondelete="SET NULL"),
         nullable=True,
+        index=True,
     )
     is_lesson: Mapped[bool] = mapped_column(Boolean, default=False, index=True)
     lesson_technique: Mapped[str | None] = mapped_column(String, nullable=True)
