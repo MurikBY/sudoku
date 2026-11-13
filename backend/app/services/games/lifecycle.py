@@ -61,7 +61,6 @@ async def sync_elapsed_seconds(
     game = await get_game_in_progress(session, user_id, game_id, for_update=True)
     credit_play_time(game, elapsed_seconds)
     await session.commit()
-    await session.refresh(game)
     return game
 
 
@@ -81,7 +80,6 @@ async def complete_game(
 
     await record_if_objective_met(session, game)
     await session.commit()
-    await session.refresh(game)
     return game
 
 
@@ -95,5 +93,4 @@ async def abandon_game(
     credit_play_time(game, elapsed_seconds)
     mark_game_abandoned(game)
     await session.commit()
-    await session.refresh(game)
     return game

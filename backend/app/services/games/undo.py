@@ -119,7 +119,6 @@ async def undo_last_move(
     await drop_progress_cleared_by_undo(session, game, objective_was_met)
 
     await session.commit()
-    await session.refresh(game)
     return UndoResult(
         game=game,
         flashed_cell_indices=flashed_cell_indices,

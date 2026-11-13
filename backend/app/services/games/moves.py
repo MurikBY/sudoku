@@ -61,7 +61,6 @@ async def apply_move(
         if elapsed_seconds is not None:
             credit_play_time(game, elapsed_seconds)
         await session.commit()
-        await session.refresh(game)
         return MoveResult(game=game, is_mistake=False)
 
     push_undo_entry(
@@ -95,5 +94,4 @@ async def apply_move(
 
     await record_if_objective_met(session, game)
     await session.commit()
-    await session.refresh(game)
     return MoveResult(game=game, is_mistake=is_mistake)

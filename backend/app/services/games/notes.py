@@ -35,7 +35,6 @@ async def apply_notes(
         if elapsed_seconds is not None:
             credit_play_time(game, elapsed_seconds)
         await session.commit()
-        await session.refresh(game)
         return game
 
     push_undo_entry(game, cell_index=cell_index, previous_value=None)
@@ -54,5 +53,4 @@ async def apply_notes(
 
     await record_if_objective_met(session, game)
     await session.commit()
-    await session.refresh(game)
     return game

@@ -70,5 +70,4 @@ async def apply_coach_hint(
         credit_play_time(game, elapsed_seconds)
 
     await session.commit()
-    await session.refresh(game)
     return CoachHintResult(game=game, hint=hint)

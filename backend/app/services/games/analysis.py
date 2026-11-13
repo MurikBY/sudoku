@@ -48,5 +48,4 @@ async def create_analysis_game(
         game.notes = dump_notes(notes)
     session.add(game)
     await session.commit()
-    await session.refresh(game)
     return game

@@ -57,5 +57,4 @@ async def create_game(
     )
     session.add(game)
     await session.commit()
-    await session.refresh(game)
     return game
