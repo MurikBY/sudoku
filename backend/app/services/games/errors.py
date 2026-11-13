@@ -37,6 +37,10 @@ class UndoUnavailable(ConflictError):
     pass
 
 
+class GameLogFull(ConflictError):
+    pass
+
+
 class LessonTechniqueUnknown(InvalidInputError):
     pass
 

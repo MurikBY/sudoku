@@ -8,6 +8,7 @@ from sqlalchemy.orm.attributes import flag_modified
 
 from app.models.game import Game
 from app.schemas.game import GameEventKind
+from app.services.games.errors import GameLogFull
 from app.services.games.stored_state import (
     ClearEvent,
     HintEvent,
@@ -18,6 +19,10 @@ from app.services.games.stored_state import (
     read_events,
 )
 from app.services.unique_codes import SHARE_CODE_LENGTH, allocate_unique_code
+
+# The longest game in production had 390 events. The cap stops a script from growing
+# one row, and the JSONB rewrite on every write, without bound.
+MAX_GAME_EVENTS = 2_000
 
 
 async def allocate_share_code(session: AsyncSession) -> str:
@@ -33,6 +38,8 @@ def append_game_event(
     notes: list[int] | None = None,
     peer_notes: dict[str, list[int]] | None = None,
 ) -> None:
+    if len(game.events) >= MAX_GAME_EVENTS:
+        raise GameLogFull(f"this game already has {MAX_GAME_EVENTS} recorded moves")
     event = dump_game_event(
         kind,
         cell=cell,

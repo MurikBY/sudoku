@@ -10,6 +10,7 @@ from app.services.errors import (
 )
 from app.services.games.errors import (
     ElapsedExceedsGameAge,
+    GameLogFull,
     GameNotComplete,
     GameNotFound,
     GameNotInProgress,
@@ -33,6 +34,7 @@ DOMAIN_ERROR_CODES: dict[type[DomainError], str] = {
     ForbiddenError: "forbidden",
     GameNotComplete: "game_not_complete",
     GameNotFound: "game_not_found",
+    GameLogFull: "game_log_full",
     GameNotInProgress: "game_not_in_progress",
     GameReviewUnavailable: "game_review_unavailable",
     InvalidHint: "invalid_hint",

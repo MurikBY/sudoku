@@ -1,6 +1,11 @@
+import os
+import uuid
+
 import pytest
 from httpx import AsyncClient
+from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
+from app.models.game import Game
 from tests.fixtures import KNOWN_PUZZLE, KNOWN_SOLUTION
 from tests.game_flow import save_assists
 
@@ -263,3 +268,47 @@ async def test_repeated_correct_digit_keeps_restored_peer_note(
     assert repeated.json()["notes"][peer_key] == [correct_value]
     assert repeated.json()["undo_count"] == undo_count_after_restore
     assert repeated.json()["elapsed_seconds"] == 12
+
+
+@pytest.mark.asyncio
+async def test_move_is_rejected_once_the_game_log_is_full(
+    async_client: AsyncClient,
+    auth_headers: dict[str, str],
+    mock_puzzle_generation: None,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr("app.services.game_events.MAX_GAME_EVENTS", 2)
+    created = await async_client.post(
+        "/api/games", json={"difficulty": "easy"}, headers=auth_headers
+    )
+    game_id = created.json()["id"]
+    empty = [index for index, char in enumerate(KNOWN_PUZZLE) if char == "0"]
+
+    for index in empty[:2]:
+        accepted = await async_client.put(
+            f"/api/games/{game_id}/cells/{index}",
+            json={"value": int(KNOWN_SOLUTION[index])},
+            headers=auth_headers,
+        )
+        assert accepted.status_code == 200
+
+    rejected = await async_client.put(
+        f"/api/games/{game_id}/cells/{empty[2]}",
+        json={"value": int(KNOWN_SOLUTION[empty[2]])},
+        headers=auth_headers,
+    )
+    assert rejected.status_code == 409
+    assert rejected.json() == {
+        "code": "game_log_full",
+        "message": "this game already has 2 recorded moves",
+    }
+    # A fresh connection: the test client shares one session, which keeps the rolled-back edit.
+    engine = create_async_engine(os.environ["DATABASE_URL"])
+    try:
+        async with async_sessionmaker(engine)() as session:
+            stored = await session.get(Game, uuid.UUID(game_id))
+            assert stored is not None
+            assert stored.current_grid[empty[2]] == "0"
+            assert len(stored.events) == 2
+    finally:
+        await engine.dispose()
