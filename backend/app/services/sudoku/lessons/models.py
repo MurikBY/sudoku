@@ -2,9 +2,9 @@ from typing import Annotated, Literal, Self
 
 from pydantic import BaseModel, ConfigDict, Field, StrictInt, field_validator, model_validator
 
-from app.models.enums import LessonRole
 from app.services.sudoku.coach_step import NotesIssue, NotesIssueKind
 from app.services.sudoku.grid import HouseKind, parse_grid
+from app.services.sudoku.lessons.role import LessonRole
 from app.services.sudoku.technique import TECHNIQUE_ORDER, Technique
 from app.services.sudoku.technique_steps import TechniqueStep
 

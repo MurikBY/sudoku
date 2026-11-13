@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 
-from app.models.enums import LessonRole
 from app.services.sudoku.candidates import initial_candidates
 from app.services.sudoku.coach_step import candidates_after_step
 from app.services.sudoku.grid import (
@@ -18,6 +17,7 @@ from app.services.sudoku.lessons.models import (
     NotesIssuePayload,
     TechniqueStepPayload,
 )
+from app.services.sudoku.lessons.role import LessonRole
 from app.services.sudoku.lessons.store import load_pool, position_by_id
 from app.services.sudoku.technique import EASY_TECHNIQUES, Technique
 from app.services.sudoku.technique_steps import TechniqueStep, outside_digit_cells

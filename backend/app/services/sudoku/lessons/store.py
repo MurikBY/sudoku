@@ -4,12 +4,12 @@ from pathlib import Path
 
 from pydantic import TypeAdapter
 
-from app.models.enums import LessonRole
 from app.services.sudoku.lessons.models import (
     LESSON_POOL_SIZE,
     LESSON_TECHNIQUES,
     LessonPosition,
 )
+from app.services.sudoku.lessons.role import LessonRole
 
 # This file is app/services/sudoku/lessons/store.py, so parents[3] is app/.
 LESSONS_DIR = Path(__file__).resolve().parents[3] / "data" / "lessons"

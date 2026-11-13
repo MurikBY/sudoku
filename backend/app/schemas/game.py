@@ -4,12 +4,13 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, Field
 
-from app.models.enums import Difficulty, GameStatus, LessonRole
+from app.models.enums import Difficulty, GameStatus
 from app.schemas.preferences import GameAssistsPayload
 from app.schemas.strict_request import StrictRequest
 from app.services.sudoku.coach_step import NotesIssueKind
 from app.services.sudoku.grid import HouseKind
 from app.services.sudoku.lessons.models import NotesIssuePayload, TechniqueStepPayload
+from app.services.sudoku.lessons.role import LessonRole
 from app.services.sudoku.technique import Technique
 
 MAX_ELAPSED_SECONDS = 7 * 24 * 3600

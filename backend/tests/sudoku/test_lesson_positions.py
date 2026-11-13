@@ -4,7 +4,6 @@ from random import Random
 import pytest
 from pydantic import ValidationError
 
-from app.models.enums import LessonRole
 from app.schemas.game import TaughtLessonSnapshotResponse
 from app.services.sudoku.coach_step import (
     NotesIssueKind,
@@ -26,6 +25,7 @@ from app.services.sudoku.lessons.models import (
     LessonPosition,
     TechniqueStepPayload,
 )
+from app.services.sudoku.lessons.role import LessonRole
 from app.services.sudoku.lessons.runtime import lesson_objective_met
 from app.services.sudoku.lessons.store import load_pool, taught_position
 from app.services.sudoku.solver import solve

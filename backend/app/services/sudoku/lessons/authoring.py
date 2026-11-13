@@ -3,7 +3,6 @@ from collections.abc import Iterator
 from pathlib import Path
 from random import Random
 
-from app.models.enums import LessonRole
 from app.services.sudoku.candidates import initial_candidates, place_digit
 from app.services.sudoku.coach_step import (
     LocatedTechniqueStep,
@@ -25,6 +24,7 @@ from app.services.sudoku.lessons.models import (
     NotesIssuePayload,
     TechniqueStepPayload,
 )
+from app.services.sudoku.lessons.role import LessonRole
 from app.services.sudoku.lessons.store import LESSONS_DIR, load_pool, require_pool_shape
 from app.services.sudoku.solver import count_solutions, solve
 from app.services.sudoku.technique import EASY_TECHNIQUES

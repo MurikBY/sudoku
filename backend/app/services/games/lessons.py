@@ -3,7 +3,7 @@ from dataclasses import dataclass
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.enums import Difficulty, GameStatus, LessonRole
+from app.models.enums import Difficulty, GameStatus
 from app.models.game import Game
 from app.models.user import User
 from app.services.game_events import allocate_share_code
@@ -12,6 +12,7 @@ from app.services.games.lifecycle import abandon_in_progress_lesson_games
 from app.services.games.stored_state import dump_notes
 from app.services.preferences_service import preferences_from_user
 from app.services.sudoku.lessons.models import LESSON_TECHNIQUES, PENCIL_LESSON, LessonPosition
+from app.services.sudoku.lessons.role import LessonRole
 from app.services.sudoku.lessons.store import load_pool, taught_position
 from app.services.sudoku.technique import EASY_TECHNIQUES, MEDIUM_TECHNIQUES, Technique
 

@@ -14,8 +14,3 @@ class PartyStatus(enum.StrEnum):
     waiting = "waiting"
     started = "started"
     cancelled = "cancelled"
-
-
-class LessonRole(enum.StrEnum):
-    taught = "taught"
-    practice = "practice"

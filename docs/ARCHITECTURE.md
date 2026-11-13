@@ -48,7 +48,7 @@ flowchart LR
 
 ## Backend layers
 
-`api` calls `services/games`, `services/stats`, and `services/party`. `services/party` calls `services/games` and `services/sudoku`. `services/games` calls `services/sudoku`. Those packages also import `schemas/` and `models/`. Nothing in `services/` imports `api/`. The diagram draws the calls, not the shared imports.
+`api` calls `services/games`, `services/stats`, and `services/party`. `services/party` calls `services/games` and `services/sudoku`. `services/games` calls `services/sudoku`. Imports point one way. The engine in `services/sudoku/` imports nothing else from the app. `models/` uses its enums, `schemas/` uses the engine and `models/`, `services/` uses all three, and `api/` sits on top, with `api/mappers.py` turning domain objects into responses. `tests/test_layer_imports.py` fails on an import that points up. The diagram draws the calls, not the shared imports.
 
 ![api calls party, games, and stats. party calls games and sudoku. games calls sudoku.](media/backend-layers.svg)
 
