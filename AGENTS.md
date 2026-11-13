@@ -23,7 +23,7 @@ Backend layers: `api/` (routers, HTTP only) → `services/` (business logic) →
 - Backend checks: `cd backend && uv run ruff check . ../deploy && uv run ruff format --check . ../deploy && uv run mypy app ../deploy/*.py && uv run python scripts/export_openapi.py --check && uv run pytest`. Tests read `DATABASE_URL` from the shell, not from `.env`; it must name a `*_test` database, otherwise pytest refuses to start (exit code 2). Frontend checks: `cd frontend && npm run gen:api && git diff --exit-code src/api/schema.d.ts && npm run lint && npm run typecheck && npm test && npm run build`. CI runs both, and also builds the backend and frontend Docker images.
 - Verify with linters, tests, and throwaway scripts; do not start the application.
 - Telegram Mini App rules: HTTP auth is the `X-Init-Data` header, verified with HMAC and `compare_digest`, rejected when `auth_date` is older than 24 hours or more than 60 seconds in the future. WebSocket auth uses a one-time ticket, never `initData` in the URL. `index.html` and `version.json` are served with `no-store`; hashed assets are `immutable`; a `buildId` mismatch reloads once. Layout reads the `--safe-*` tokens, which prefer Telegram's `--tg-safe-area-inset-*` and fall back to `env(safe-area-inset-*)`; full-height screens use `--app-vh`, taken from `viewportStableHeight`.
-- Deployment is scripted: commit, push, then run `deploy/deploy.sh` on the host. It pulls fast-forward only, builds the images, and backs up the database before the new backend runs its migrations. Root's crontab on the host also runs `backup-db.sh` daily at 03:30 UTC, and `check-backup-freshness.sh` at 05:00 UTC, which has the bot message `ADMIN_TELEGRAM_IDS` when the newest dump is older than 26 hours. After each dump, `deploy/prune_backups.py` keeps every dump of the last 7 days, then the newest of each of the last 4 weeks and 6 months. Dumps are not copied off the server, and `.env` is not copied next to them. The host never holds hand-edited code. Never remove volumes there (`docker compose down -v`).
+- Deployment is scripted: commit, push, then run `deploy/deploy.sh` on the host. It pulls fast-forward only, builds the images, and backs up the database before the new backend runs its migrations. Backups, their schedule, and restore are in [`docs/DEPLOY.md`](docs/DEPLOY.md). The host never holds hand-edited code. Never remove volumes there (`docker compose down -v`).
 - Commits: one logical change per commit; subject is one imperative English sentence stating the outcome; no type prefixes.
 
 ## Docs
@@ -34,5 +34,6 @@ Backend layers: `api/` (routers, HTTP only) → `services/` (business logic) →
 | [`docs/ENGINE.md`](docs/ENGINE.md) | How puzzles are rated and generated |
 | [`docs/DECISIONS.md`](docs/DECISIONS.md) | Why the main choices were made |
 | [`docs/SECURITY.md`](docs/SECURITY.md) | Trust boundaries and known limits |
+| [`docs/DEPLOY.md`](docs/DEPLOY.md) | How the host is deployed, backed up, and restored |
 | [`docs/LEARN.md`](docs/LEARN.md) | How Learn works |
 | [`docs/DESIGN.md`](docs/DESIGN.md) | Palette, type, and the gazette components |

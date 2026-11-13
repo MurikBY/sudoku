@@ -56,6 +56,8 @@ How a request moves is in [ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 CI runs lint, types, and tests for the backend and the frontend. It applies the database migrations before the backend tests and builds both Docker images. The commands are in [`.github/workflows/ci.yml`](.github/workflows/ci.yml).
 
+A deploy is one script on the host, with a database backup before the migrations. Daily backups, an alert when they stop, and a weekly encrypted copy are described in [DEPLOY.md](docs/DEPLOY.md).
+
 [![CI](https://github.com/MurikBY/sudoku/actions/workflows/ci.yml/badge.svg)](https://github.com/MurikBY/sudoku/actions/workflows/ci.yml)
 
 ## Limits
