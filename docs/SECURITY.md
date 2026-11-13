@@ -70,7 +70,7 @@ Hiding `solution` on a live review would leave `puzzle` and `wrong_digit_indices
 
 ## Addresses, CSP, and dependency checks
 
-The principal is the Telegram user in `initData`. A request with no live signature is already a 401. Taking a puzzle from the pool is limited per Telegram user, 6 takes in 60 seconds across new games and party starts, and the next one answers 429. The counter lives in this process. Other routes have no rate limit, and a per-IP rule is not used because many WebView clients share an address.
+The principal is the Telegram user in `initData`. A request with no live signature is already a 401. Taking a puzzle from the pool is limited per Telegram user, 6 takes in 60 seconds across new games and party starts, and the next one answers 429. The counter lives in this process. A reset followed by a clean win can push the same player out of the Top 10 again, so the "pushed out" message goes to one player at most once per difficulty in 24 hours. That cooldown also lives in this process. Other routes have no rate limit, and a per-IP rule is not used because many WebView clients share an address.
 
 There is no Content-Security-Policy. The client is a Vite bundle inside the Telegram WebView. A strict policy has to be proven against that WebView, and a policy that allows inline scripts does not constrain the page. Static responses do send `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, and `Strict-Transport-Security: max-age=31536000`. Traefik sends `/api` to FastAPI, so those headers are not on the API.
 

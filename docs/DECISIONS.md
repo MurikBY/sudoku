@@ -49,9 +49,10 @@ The poll is the recovery. A dropped socket still learns that the party started, 
 - `bot/broadcast.py` holds broadcast drafts: `_awaiting_message_expires`, `_awaiting_confirm`, and `_album_collectors`.
 - `puzzle_generator` owns the child worker.
 - `pool_take_limit` holds the recent pool-take times.
+- `top10_drop_cooldown` holds when each player last got a Top 10 drop message.
 - The refill loop is an asyncio task on this process.
 
-**Trade-off.** A second API process would not see the sockets, the tickets, the drafts, or the take counters. Two refill loops would both generate. Pool takes would still be safe, because the row lock is in Postgres.
+**Trade-off.** A second API process would not see the sockets, the tickets, the drafts, the take counters, or the drop cooldown. Two refill loops would both generate. Pool takes would still be safe, because the row lock is in Postgres.
 
 ## Deleted rows and the rating archive
 

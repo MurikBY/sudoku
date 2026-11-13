@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.background import spawn
 from app.models.enums import Difficulty
 from app.models.game import Game
+from app.services import top10_drop_cooldown as top10_drop_cooldowns
 from app.services.party_notify import (
     PartyCompletionNotice,
     build_party_completion_notice,
@@ -49,10 +50,16 @@ async def _party_notice(session: AsyncSession, game: Game) -> PartyCompletionNot
 
 async def _top10_dropped_user_id(session: AsyncSession, game: Game) -> int | None:
     try:
-        return await ejected_top10_user_id(session, game)
+        dropped_user_id = await ejected_top10_user_id(session, game)
     except Exception:
         logger.exception("top10 drop notify failed game_id=%s", game.id)
         return None
+    if dropped_user_id is None:
+        return None
+    if not top10_drop_cooldowns.top10_drop_cooldown.claim(dropped_user_id, game.difficulty):
+        logger.info("top10 drop notify skipped by cooldown user_id=%s", dropped_user_id)
+        return None
+    return dropped_user_id
 
 
 async def _send_completion_notices(bot: Bot, notices: CompletionNotices) -> None:

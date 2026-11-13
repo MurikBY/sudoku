@@ -133,4 +133,4 @@ erDiagram
 
 ## Single instance
 
-`party_ws_hub`, `party_ws_tickets`, the broadcast drafts in `bot/broadcast.py`, and the pool take counters live in this process. The pool refill and its worker process do too: the worker is a child of this process. A second API process would not see the hub, the tickets, the drafts, the pool take counters, or that worker.
+`party_ws_hub`, `party_ws_tickets`, the broadcast drafts in `bot/broadcast.py`, the pool take counters, and the Top 10 drop cooldown live in this process. The pool refill and its worker process do too: the worker is a child of this process. A second API process would not see the hub, the tickets, the drafts, the pool take counters, the drop cooldown, or that worker.

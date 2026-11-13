@@ -49,6 +49,7 @@ from app.services import auth  # noqa: E402
 from app.services.pool_take_limit import PoolTakeLimit  # noqa: E402
 from app.services.sudoku.carver import givens_count  # noqa: E402
 from app.services.sudoku.puzzle import GeneratedPuzzle  # noqa: E402
+from app.services.top10_drop_cooldown import Top10DropCooldown  # noqa: E402
 
 app.state.bot = None
 app.state.dispatcher = None
@@ -59,6 +60,14 @@ def fresh_pool_take_limit(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(
         "app.services.pool_take_limit.pool_take_limit",
         PoolTakeLimit(),
+    )
+
+
+@pytest.fixture(autouse=True)
+def fresh_top10_drop_cooldown(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        "app.services.top10_drop_cooldown.top10_drop_cooldown",
+        Top10DropCooldown(),
     )
 
 
