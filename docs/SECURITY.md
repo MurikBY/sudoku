@@ -78,7 +78,7 @@ There is no Content-Security-Policy. The client is a Vite bundle inside the Tele
 
 `/api/health`, `/api/ready`, `/api/docs`, and `/api/openapi.json` do not require a session. Readiness runs `SELECT 1`. The OpenAPI document describes the routes. It does not contain secrets.
 
-Dependabot opens weekly update requests for the backend `uv` lock, the frontend npm lock, GitHub Actions, and the backend and frontend Docker images. Minor and patch updates are grouped. The Python and Node runtimes move by hand, so Dependabot ignores their new versions, and it ignores the TypeScript, `@vitejs/plugin-react`, and `@types/node` majors. Each ignore names its reason in `.github/dependabot.yml`. CI runs the tests and builds the images. It does not run `npm audit` or a Python audit: those checks fail the build on transitive advisories, and the same updates already arrive as Dependabot requests.
+Dependabot opens weekly update requests for the backend `uv` lock, the frontend npm lock, GitHub Actions, the backend and frontend Docker images, and the PostgreSQL image in the compose file. Every base image is pinned by exact version and digest, so a rebuild uses the same image until one of those requests changes it. Minor and patch updates are grouped. The Python and Node runtimes move by hand, so Dependabot ignores their new versions, and it ignores the TypeScript, `@vitejs/plugin-react`, and `@types/node` majors. Each ignore names its reason in `.github/dependabot.yml`. CI runs the tests and builds the images. It does not run `npm audit` or a Python audit: those checks fail the build on transitive advisories, and the same updates already arrive as Dependabot requests.
 
 ## Reporting
 
