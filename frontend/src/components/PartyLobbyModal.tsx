@@ -5,7 +5,7 @@ import type { PartyMember } from "@/api/types";
 import { DifficultyLinks } from "@/components/DifficultyLinks";
 import { ErrorBanner } from "@/components/ErrorBanner";
 import type { PartyLobbyPhase } from "@/hooks/usePartyLobby";
-import type { PlaySessionLobby } from "@/hooks/usePlaySession";
+import type { PlaySessionLobby } from "@/hooks/playSessionTypes";
 import { cn } from "@/lib/classNames";
 
 function lobbyBackdropClick(

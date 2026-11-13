@@ -6,7 +6,7 @@ import { DifficultyLinks } from "@/components/DifficultyLinks";
 import { ErrorBanner } from "@/components/ErrorBanner";
 import { HomeIndexLink } from "@/components/HomeIndexLink";
 import { HomeWatermarkGrid } from "@/components/HomeWatermarkGrid";
-import type { PlaySessionHome } from "@/hooks/usePlaySession";
+import type { PlaySessionHome } from "@/hooks/playSessionTypes";
 import { queryLoadError, queryLoadReconnecting } from "@/lib/api/queryLoadStatus";
 import { formatGazetteDateline } from "@/lib/format/gazetteDate";
 import { completedLessonTally, lessonProgressByTechnique } from "@/content/techniquesGuideCopy";

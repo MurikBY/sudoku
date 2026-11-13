@@ -1,21 +1,21 @@
-import { useCallback, useEffect, useRef, useState, type Dispatch } from "react";
+import { useCallback, useEffect, useRef, type Dispatch } from "react";
 
-import { abandonGame, fetchGameReviewByCode } from "@/api/games";
-import { fetchPlayLockStatus } from "@/api/playLock";
-import type { Difficulty, Game, GameReview, Party, PartyMember, StatsPeriod } from "@/api/types";
-import type { TechniqueArticleId } from "@/content/techniquesGuideCopy";
+import { abandonGame } from "@/api/games";
+import type { Difficulty, Game, GameReview, StatsPeriod } from "@/api/types";
+import type { PartyLobbyPhase } from "@/hooks/partyLobbyState";
+import type { PlaySession } from "@/hooks/playSessionTypes";
+import type { ScreenAction, ScreenState } from "@/hooks/screenState";
 import { useAnalysisSession } from "@/hooks/useAnalysisSession";
 import { useHomeGames } from "@/hooks/useHomeGames";
 import { useLessonSession } from "@/hooks/useLessonSession";
-import { usePartyLobby, type PartyLobbyPhase } from "@/hooks/usePartyLobby";
-import { usePlayLock, type PlayLockAttempt } from "@/hooks/usePlayLock";
+import { usePartyLobby } from "@/hooks/usePartyLobby";
+import { usePlayLockGate } from "@/hooks/usePlayLockGate";
 import { usePlayPresence } from "@/hooks/usePlayPresence";
-import type { ScreenAction, ScreenState } from "@/hooks/screenState";
-import { formatApiErrorMessage } from "@/lib/api/apiError";
+import { usePlaySessionHome } from "@/hooks/usePlaySessionHome";
+import { usePlaySessionLobby } from "@/hooks/usePlaySessionLobby";
+import { useTelegramDeepLink } from "@/hooks/useTelegramDeepLink";
 import { bestEffort } from "@/lib/api/bestEffort";
 import type { GameAssists } from "@/lib/play/gameSettings";
-import { assistsFromPayload } from "@/lib/play/preferencesSync";
-import { readTelegramDeepLink } from "@/lib/telegram/readTelegramDeepLink";
 
 function lockConflictAction(
   screenName: ScreenState["name"],
@@ -46,80 +46,6 @@ type UsePlaySessionArgs = {
   loadStats: (period?: StatsPeriod) => void;
 };
 
-export type PlaySessionHome = {
-  playLocked: boolean;
-  loading: boolean;
-  creating: boolean;
-  error: string | null;
-  reconnecting: boolean;
-  hasResumableGame: boolean;
-  clearError: () => void;
-  startNew: () => void;
-  continueGame: () => void;
-  playWithFriends: () => void;
-  refreshResumable: () => Promise<Game | null>;
-};
-
-export type PlaySessionLobby = {
-  open: boolean;
-  phase: PartyLobbyPhase;
-  party: Party | null;
-  members: PartyMember[];
-  joinCode: string;
-  joinedOk: boolean;
-  busy: boolean;
-  error: string | null;
-  onDifficultyChange: (difficulty: Difficulty) => void;
-  onJoinCodeChange: (value: string) => void;
-  onChooseJoin: () => void;
-  onCreate: () => void;
-  onJoin: () => void;
-  onStart: () => void;
-  onLeave: () => void;
-  onClose: () => void;
-  onDismissClosed: () => void;
-  onClearError: () => void;
-};
-
-type PlaySessionReview = {
-  back: () => void;
-  open: (review: GameReview) => void;
-  openParty: (partyId: string) => void;
-};
-
-type PlaySessionAnalysis = {
-  playFromHere: (shareCode: string, eventIndex: number) => void;
-  busy: boolean;
-  error: string | null;
-  onSolved: () => void;
-  backToReview: () => void;
-};
-
-type PlaySessionLesson = {
-  start: (
-    technique: TechniqueArticleId,
-    variant: "taught" | "practice",
-    excludePositionId?: string,
-  ) => void;
-  back: () => void;
-  busy: boolean;
-  error: string | null;
-};
-
-type PlaySessionLeave = {
-  home: () => void;
-  rating: () => void;
-};
-
-type PlaySession = {
-  home: PlaySessionHome;
-  lobby: PlaySessionLobby;
-  review: PlaySessionReview;
-  analysis: PlaySessionAnalysis;
-  lesson: PlaySessionLesson;
-  leave: PlaySessionLeave;
-};
-
 export function usePlaySession({
   screen,
   dispatch,
@@ -128,44 +54,25 @@ export function usePlaySession({
   setDifficulty,
   loadStats,
 }: UsePlaySessionArgs): PlaySession {
-  const partyDeepLinkHandled = useRef(false);
-  const onLockConflictRef = useRef<() => void>(() => {});
-  // Stays set until the next acquire, so a second watcher does not call leaveParty again.
-  const lockConflictHandledRef = useRef(false);
   const activeGameRef = useRef<Game | null>(null);
-  const [playLockedByOther, setPlayLockedByOther] = useState(false);
 
   useEffect(() => {
     activeGameRef.current = screen.name === "play" ? screen.game : null;
   }, [screen]);
 
+  const homeGames = useHomeGames();
+  const { refreshResumable, setError: setHomeError } = homeGames;
+
   const {
-    resumableGame,
-    loading: homeLoading,
-    creating,
-    error: homeError,
-    reconnecting: homeReconnecting,
-    refreshResumable,
-    startNewGame,
-    setError: setHomeError,
-    clearError: clearHomeError,
-  } = useHomeGames();
-
-  const reportLockConflict = useCallback(() => {
-    onLockConflictRef.current();
-  }, []);
-
-  const { acquire: acquirePlayLockRaw, release: releasePlayLock } = usePlayLock({
-    onLostLock: reportLockConflict,
-  });
-
-  const acquirePlayLock = useCallback(async () => {
-    const acquired = await acquirePlayLockRaw();
-    if (acquired) {
-      lockConflictHandledRef.current = false;
-    }
-    return acquired;
-  }, [acquirePlayLockRaw]);
+    playLockedByOther,
+    acquirePlayLock,
+    releasePlayLock,
+    ensurePlayLock,
+    playLockIsHeld,
+    refreshForeignPlayLock,
+    reportLockConflict,
+    setLockConflictHandler,
+  } = usePlayLockGate({ onError: setHomeError });
 
   const openPartyResults = useCallback(
     (partyId: string) => {
@@ -217,73 +124,45 @@ export function usePlaySession({
     onStarted: handlePartyStarted,
   });
 
-  const ensurePlayLock = useCallback(async (): Promise<PlayLockAttempt> => {
-    try {
-      const acquired = await acquirePlayLock();
-      if (!acquired) {
-        setPlayLockedByOther(true);
-        return "conflict";
-      }
-      setPlayLockedByOther(false);
-      return "acquired";
-    } catch (error) {
-      setHomeError(formatApiErrorMessage(error));
-      return "failed";
-    }
-  }, [acquirePlayLock, setHomeError]);
+  const { lobby, handleCloseLobby, handleLeaveLobby, handlePlayWithFriends } = usePlaySessionLobby({
+    partyLobby,
+    screenName: screen.name,
+    releasePlayLock,
+    playLockIsHeld,
+  });
 
-  const playLockIsHeld = useCallback(async () => {
-    return (await ensurePlayLock()) === "acquired";
-  }, [ensurePlayLock]);
-
-  const refreshForeignPlayLock = useCallback(async () => {
-    await bestEffort("keep last known lock UI; click path still enforces", async () => {
-      const status = await fetchPlayLockStatus();
-      setPlayLockedByOther(status.locked && !status.is_holder);
-    });
-  }, []);
-
-  const handleCloseLobby = useCallback(() => {
-    partyLobby.closeLobby();
-    if (screen.name !== "play") {
-      void releasePlayLock();
-    }
-  }, [partyLobby, releasePlayLock, screen.name]);
-
-  const handleLeaveLobby = useCallback(async () => {
-    await partyLobby.handleLeave();
-    if (screen.name !== "play") {
-      void releasePlayLock();
-    }
-  }, [partyLobby, releasePlayLock, screen.name]);
-
-  const handleLockConflict = useCallback(() => {
-    if (lockConflictHandledRef.current) {
-      return;
-    }
-    const action = lockConflictAction(screen.name, partyLobby.open, partyLobby.phase);
-    if (action === "stay") {
-      return;
-    }
-    lockConflictHandledRef.current = true;
-    if (action === "goHome") {
-      goHome();
-      return;
-    }
-    if (action === "leave") {
-      void handleLeaveLobby();
-      return;
-    }
-    handleCloseLobby();
-  }, [goHome, handleCloseLobby, handleLeaveLobby, partyLobby.open, partyLobby.phase, screen.name]);
+  const lobbyOpen = partyLobby.open;
+  const lobbyPhase = partyLobby.phase;
 
   useEffect(() => {
-    onLockConflictRef.current = handleLockConflict;
-  }, [handleLockConflict]);
+    setLockConflictHandler(() => {
+      const action = lockConflictAction(screen.name, lobbyOpen, lobbyPhase);
+      if (action === "stay") {
+        return null;
+      }
+      if (action === "goHome") {
+        return goHome;
+      }
+      if (action === "leave") {
+        return () => {
+          void handleLeaveLobby();
+        };
+      }
+      return handleCloseLobby;
+    });
+  }, [
+    goHome,
+    handleCloseLobby,
+    handleLeaveLobby,
+    lobbyOpen,
+    lobbyPhase,
+    screen.name,
+    setLockConflictHandler,
+  ]);
 
   usePlayPresence({
     screenName: screen.name,
-    lobbyOpen: partyLobby.open,
+    lobbyOpen,
     ensurePlayLock,
     refreshForeignPlayLock,
     onLockConflict: reportLockConflict,
@@ -304,77 +183,25 @@ export function usePlaySession({
     activeGameRef,
   });
 
-  const { openLobbyWithInviteCode } = partyLobby;
+  useTelegramDeepLink({
+    dispatch,
+    openPartyResults,
+    playLockIsHeld,
+    openLobbyWithInviteCode: partyLobby.openLobbyWithInviteCode,
+    onError: setHomeError,
+  });
 
-  useEffect(() => {
-    if (partyDeepLinkHandled.current) {
-      return;
-    }
-    const deepLink = readTelegramDeepLink();
-    if (!deepLink) {
-      return;
-    }
-    partyDeepLinkHandled.current = true;
-    if (deepLink.kind === "party") {
-      openPartyResults(deepLink.partyId);
-      return;
-    }
-    if (deepLink.kind === "lobby") {
-      void (async () => {
-        if (!(await playLockIsHeld())) {
-          return;
-        }
-        await openLobbyWithInviteCode(deepLink.code);
-      })();
-      return;
-    }
-    void fetchGameReviewByCode(deepLink.code)
-      .then((review) => {
-        dispatch({ type: "openReview", review });
-      })
-      .catch((error) => {
-        setHomeError(formatApiErrorMessage(error));
-      });
-  }, [dispatch, openLobbyWithInviteCode, openPartyResults, playLockIsHeld, setHomeError]);
-
-  const handleStartNew = useCallback(async () => {
-    if (!(await playLockIsHeld())) {
-      return;
-    }
-    const started = await startNewGame(difficulty);
-    if (!started) {
-      await releasePlayLock();
-      return;
-    }
-    dispatch({ type: "startPlay", game: started, assists: { ...assists } });
-    void loadStats();
-  }, [assists, difficulty, dispatch, loadStats, playLockIsHeld, releasePlayLock, startNewGame]);
-
-  const handleContinue = useCallback(async () => {
-    if (!resumableGame) {
-      return;
-    }
-    if (!(await playLockIsHeld())) {
-      return;
-    }
-    dispatch({
-      type: "startPlay",
-      game: resumableGame,
-      assists: assistsFromPayload(resumableGame.assists),
-    });
-  }, [dispatch, playLockIsHeld, resumableGame]);
-
-  const handlePlayWithFriends = useCallback(async () => {
-    if (!(await playLockIsHeld())) {
-      return;
-    }
-    partyLobby.openLobby();
-  }, [partyLobby, playLockIsHeld]);
-
-  const handleDismissClosedLobby = useCallback(() => {
-    partyLobby.dismissClosedLobby();
-    void releasePlayLock();
-  }, [partyLobby, releasePlayLock]);
+  const home = usePlaySessionHome({
+    homeGames,
+    dispatch,
+    difficulty,
+    assists,
+    loadStats,
+    playLockedByOther,
+    playLockIsHeld,
+    releasePlayLock,
+    playWithFriends: handlePlayWithFriends,
+  });
 
   const handleOpenReview = useCallback(
     (review: GameReview) => {
@@ -401,55 +228,8 @@ export function usePlaySession({
   }, [leavePlayTo]);
 
   return {
-    home: {
-      playLocked: playLockedByOther,
-      loading: homeLoading,
-      creating,
-      error: homeError,
-      reconnecting: homeReconnecting,
-      hasResumableGame: resumableGame !== null,
-      clearError: clearHomeError,
-      startNew: () => {
-        void handleStartNew();
-      },
-      continueGame: () => {
-        void handleContinue();
-      },
-      playWithFriends: () => {
-        void handlePlayWithFriends();
-      },
-      refreshResumable,
-    },
-    lobby: {
-      open: partyLobby.open,
-      phase: partyLobby.phase,
-      party: partyLobby.party,
-      members: partyLobby.members,
-      joinCode: partyLobby.joinCode,
-      joinedOk: partyLobby.joinedOk,
-      busy: partyLobby.busy,
-      error: partyLobby.error,
-      onDifficultyChange: (level) => {
-        void partyLobby.handleDifficultyChange(level);
-      },
-      onJoinCodeChange: partyLobby.setJoinCode,
-      onChooseJoin: partyLobby.chooseJoin,
-      onCreate: () => {
-        void partyLobby.handleCreate();
-      },
-      onJoin: () => {
-        void partyLobby.handleJoin();
-      },
-      onStart: () => {
-        void partyLobby.handleStart();
-      },
-      onLeave: () => {
-        void handleLeaveLobby();
-      },
-      onClose: handleCloseLobby,
-      onDismissClosed: handleDismissClosedLobby,
-      onClearError: partyLobby.clearError,
-    },
+    home,
+    lobby,
     review: {
       back: handleBackFromReview,
       open: handleOpenReview,
