@@ -18,7 +18,7 @@ Backend layers: `api/` (routers, HTTP only) → `services/` (business logic) →
 - Write short, single-purpose functions; extract reusable logic into helpers. Split files by responsibility: state apart from rendering, one feature per file.
 - No silent fallbacks when reading data. Missing or invalid values raise.
 - Config comes from environment variables and is validated at startup in `app/config.py`. Secrets live in `.env` only; `.env.example` is committed.
-- Every schema change is an Alembic migration. Never edit an applied migration.
+- Every schema change is an Alembic migration. Never edit an applied migration. `tests/test_schema_matches_models.py` fails when the migrated schema and the models disagree.
 - Tests create their own database engine; never use the process-global engine in tests.
 - Backend checks: `cd backend && uv run ruff check . && uv run ruff format --check . && uv run mypy app && uv run python scripts/export_openapi.py --check && uv run pytest`. Tests read `DATABASE_URL` from the shell, not from `.env`; it must name a `*_test` database, otherwise pytest refuses to start (exit code 2). Frontend checks: `cd frontend && npm run gen:api && git diff --exit-code src/api/schema.d.ts && npm run lint && npm run typecheck && npm test && npm run build`. CI runs both, and also builds the backend and frontend Docker images.
 - Verify with linters, tests, and throwaway scripts; do not start the application.
