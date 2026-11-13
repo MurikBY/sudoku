@@ -15,7 +15,7 @@ from app.services.games.board_notes import (
     with_cell_notes,
 )
 from app.services.games.errors import InvalidMove, InvalidNotes, UndoUnavailable
-from app.services.games.lifecycle import credit_play_time
+from app.services.games.lifecycle import credit_reported_time
 from app.services.games.queries import get_game_in_progress
 from app.services.games.stored_state import dump_undo_entry, read_undo_entry
 from app.services.lesson_progress_service import (
@@ -79,43 +79,20 @@ async def undo_last_move(
     if not stack:
         raise UndoUnavailable("nothing to undo")
     objective_was_met = lesson_objective_is_met(game)
-    cell_index, previous_value, notes_before = read_undo_entry(stack[-1])
+    cell_index, previous_value, notes_before = read_undo_entry(stack.pop())
     flashed_cell_indices = _cells_changed_by_undo(
         game,
         cell_index,
         previous_value,
         with_cell_notes(game.notes, notes_before),
     )
-    stack.pop()
 
     if previous_value is not None:
-        current_value = parse_grid(game.current_grid)[cell_index]
-        if current_value != previous_value:
-            try:
-                validate_move(game.puzzle, game.current_grid, cell_index, previous_value)
-            except ValueError as error:
-                raise InvalidMove(str(error)) from error
-            grid_chars = list(game.current_grid)
-            grid_chars[cell_index] = str(previous_value)
-            game.current_grid = "".join(grid_chars)
-            if previous_value == EMPTY_CELL:
-                append_game_event(game, "clear", cell=cell_index)
-            else:
-                clear_cell_notes(game, cell_index)
-                append_game_event(game, "set", cell=cell_index, value=previous_value)
-
-    try:
-        for notes_cell_key, digits in notes_before.items():
-            if digits:
-                validate_notes_target(game.puzzle, game.current_grid, int(notes_cell_key))
-    except ValueError as error:
-        raise InvalidNotes(str(error)) from error
-    replace_notes_map(game, with_cell_notes(game.notes, notes_before))
-
+        _restore_digit(game, cell_index, previous_value)
+    _restore_notes(game, notes_before)
     game.undo_stack = stack
     flag_modified(game, "undo_stack")
-    if elapsed_seconds is not None:
-        credit_play_time(game, elapsed_seconds)
+    credit_reported_time(game, elapsed_seconds)
 
     await record_if_objective_met(session, game)
     await drop_progress_cleared_by_undo(session, game, objective_was_met)
@@ -126,3 +103,30 @@ async def undo_last_move(
         flashed_cell_indices=flashed_cell_indices,
         undone_cell_index=cell_index,
     )
+
+
+def _restore_digit(game: Game, cell_index: int, previous_value: int) -> None:
+    if parse_grid(game.current_grid)[cell_index] == previous_value:
+        return
+    try:
+        validate_move(game.puzzle, game.current_grid, cell_index, previous_value)
+    except ValueError as error:
+        raise InvalidMove(str(error)) from error
+    grid_chars = list(game.current_grid)
+    grid_chars[cell_index] = str(previous_value)
+    game.current_grid = "".join(grid_chars)
+    if previous_value == EMPTY_CELL:
+        append_game_event(game, "clear", cell=cell_index)
+        return
+    clear_cell_notes(game, cell_index)
+    append_game_event(game, "set", cell=cell_index, value=previous_value)
+
+
+def _restore_notes(game: Game, notes_before: dict[str, list[int]]) -> None:
+    try:
+        for notes_cell_key, digits in notes_before.items():
+            if digits:
+                validate_notes_target(game.puzzle, game.current_grid, int(notes_cell_key))
+    except ValueError as error:
+        raise InvalidNotes(str(error)) from error
+    replace_notes_map(game, with_cell_notes(game.notes, notes_before))

@@ -312,3 +312,24 @@ async def test_move_is_rejected_once_the_game_log_is_full(
             assert len(stored.events) == 2
     finally:
         await engine.dispose()
+
+
+@pytest.mark.asyncio
+async def test_move_outside_the_grid_is_invalid(
+    async_client: AsyncClient,
+    auth_headers: dict[str, str],
+    mock_puzzle_generation: None,
+) -> None:
+    created = await async_client.post(
+        "/api/games", json={"difficulty": "easy"}, headers=auth_headers
+    )
+    game_id = created.json()["id"]
+
+    response = await async_client.put(
+        f"/api/games/{game_id}/cells/81",
+        json={"value": 1},
+        headers=auth_headers,
+    )
+
+    assert response.status_code == 400
+    assert response.json()["code"] == "invalid_move"

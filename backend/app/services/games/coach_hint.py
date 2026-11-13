@@ -5,7 +5,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.game import Game
 from app.services.games.errors import InvalidHint
-from app.services.games.lifecycle import credit_play_time
+from app.services.games.lifecycle import credit_reported_time
 from app.services.games.queries import get_game_in_progress
 from app.services.sudoku.coach_step import (
     NotesIssue,
@@ -66,8 +66,7 @@ async def apply_coach_hint(
     game = await get_game_in_progress(session, user_id, game_id, for_update=True)
     hint = _next_coach_hint(game)
     game.hints_count += 1
-    if elapsed_seconds is not None:
-        credit_play_time(game, elapsed_seconds)
+    credit_reported_time(game, elapsed_seconds)
 
     await session.commit()
     return CoachHintResult(game=game, hint=hint)

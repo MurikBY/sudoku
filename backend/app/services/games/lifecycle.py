@@ -24,6 +24,12 @@ def credit_play_time(game: Game, elapsed_seconds: int) -> None:
     game.elapsed_seconds = elapsed_seconds
 
 
+def credit_reported_time(game: Game, elapsed_seconds: int | None) -> None:
+    # Board writes carry the clock when the client has one; None leaves the stored time.
+    if elapsed_seconds is not None:
+        credit_play_time(game, elapsed_seconds)
+
+
 def mark_game_abandoned(game: Game) -> None:
     game.status = GameStatus.abandoned
 
