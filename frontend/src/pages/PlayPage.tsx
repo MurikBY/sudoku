@@ -1,20 +1,20 @@
-import { useEffect, useRef, useState } from "react";
-
-import { syncGameProgress } from "@/api/games";
 import type { Game } from "@/api/types";
-import { ErrorBanner } from "@/components/ErrorBanner";
-import { LessonBriefCard, LessonSuccessCard } from "@/components/LessonPlayCards";
+import { PlayLessonCards } from "@/components/LessonPlayCards";
 import { PartyLobbyProgressPanel } from "@/components/PartyLobbyProgressPanel";
 import { PlayBoard } from "@/components/PlayBoard";
 import { PlayCompletion } from "@/components/PlayCompletion";
+import { PlayErrorNotice } from "@/components/PlayErrorNotice";
 import { PlayMasthead } from "@/components/PlayMasthead";
 import { COMPLETION_CONNECTION_ERROR } from "@/hooks/useBoardMoves";
+import { useAnalysisSolvedExit } from "@/hooks/useAnalysisSolvedExit";
 import { useGame } from "@/hooks/useGame";
 import { useGameTimer } from "@/hooks/useGameTimer";
 import { useHintFlash } from "@/hooks/useHintFlash";
+import { useLessonCards } from "@/hooks/useLessonCards";
 import { useMistakeFeedback } from "@/hooks/useMistakeFeedback";
 import { usePartyProgress } from "@/hooks/usePartyProgress";
 import { usePlayBoardSession } from "@/hooks/usePlayBoardSession";
+import { usePlayProgressFlush } from "@/hooks/usePlayProgressFlush";
 import { useUnitCompletionCelebration } from "@/hooks/useUnitCompletionCelebration";
 import { shouldAutoComplete } from "@/lib/play/boardNotes";
 import type { GameAssists } from "@/lib/play/gameSettings";
@@ -54,87 +54,35 @@ export function PlayPage({
     onCellsFlash: triggerHintFlash,
   });
   const { phase, game, error, selectedIndex, conflictIndices, wrongDigitIndices } = board;
-  const { clearError, finishCompletedGame } = actions;
   const { animatedMistakeIndex, triggerMistakeFeedback } = useMistakeFeedback();
-  const [lessonKeepSolving, setLessonKeepSolving] = useState(false);
-  const [lessonBriefOpen, setLessonBriefOpen] = useState(mode.kind === "lesson");
   const isPlaying = phase === "playing" && game.status === "in_progress";
   const isCompleted = phase === "completed";
   const showAnalysisSolved = isCompleted && mode.kind === "analysis";
-  const onAnalysisSolved = mode.kind === "analysis" ? mode.onSolved : undefined;
   const isPartyGame = game.party_id !== null;
-  const showLessonSuccess =
-    mode.kind === "lesson" &&
-    game.lesson_objective_met === true &&
-    !lessonKeepSolving &&
-    (isPlaying || isCompleted);
-  const showLessonBrief =
-    mode.kind === "lesson" && isPlaying && !showLessonSuccess && lessonBriefOpen;
+  const lessonCards = useLessonCards({ mode, game, isPlaying, isCompleted });
   const { formattedElapsed, getElapsedSeconds, setElapsedFromServer } = useGameTimer({
     gameId: game.id,
     initialElapsedSeconds: game.elapsed_seconds,
     isRunning: isPlaying && !isPaused,
   });
-  const wasPausedRef = useRef(isPaused);
   const session = usePlayBoardSession({
     board,
     pending,
     actions,
     assists,
-    play: { isPlaying, showLessonSuccess, isPaused, onResume, mode },
+    play: { isPlaying, showLessonSuccess: lessonCards.showSuccess, isPaused, onResume, mode },
     timer: { getElapsedSeconds, setElapsedFromServer },
     triggerMistakeFeedback,
   });
-  const {
-    progress: lobbyProgress,
-    error: lobbyProgressError,
-    loading: lobbyProgressLoading,
-  } = usePartyProgress(game.party_id ?? null, session.lobbyOpen);
+  const lobbyProgress = usePartyProgress(game.party_id ?? null, session.lobbyOpen);
   const celebratingIndices = useUnitCompletionCelebration({
     gameId: assists.unitCompleteAnimation ? game.id : null,
     grid: game.current_grid,
     conflictIndices,
     wrongDigitIndices,
   });
-
-  useEffect(() => {
-    const becamePaused = isPaused && !wasPausedRef.current;
-    wasPausedRef.current = isPaused;
-    if (!becamePaused || game.status !== "in_progress") {
-      return;
-    }
-    void syncGameProgress(game.id, getElapsedSeconds()).catch(() => {
-      // best-effort flush when pausing
-    });
-  }, [isPaused, game.id, game.status, getElapsedSeconds]);
-
-  useEffect(() => {
-    return () => {
-      if (game.status !== "in_progress") {
-        return;
-      }
-      void syncGameProgress(game.id, getElapsedSeconds()).catch(() => {
-        // best-effort flush when leaving Play
-      });
-    };
-  }, [game.id, game.status, getElapsedSeconds]);
-
-  useEffect(() => {
-    if (!showAnalysisSolved || onAnalysisSolved === undefined) {
-      return;
-    }
-    const timerId = window.setTimeout(() => {
-      onAnalysisSolved();
-    }, 1500);
-    return () => window.clearTimeout(timerId);
-  }, [onAnalysisSolved, showAnalysisSolved]);
-
-  if (mode.kind === "lesson" && game.lesson_objective_met === null) {
-    throw new Error("lesson game missing lesson_objective_met");
-  }
-  if (mode.kind === "lesson" && game.lesson_has_practice === null) {
-    throw new Error("lesson game missing lesson_has_practice");
-  }
+  usePlayProgressFlush({ gameId: game.id, gameStatus: game.status, isPaused, getElapsedSeconds });
+  useAnalysisSolvedExit(showAnalysisSolved, mode.kind === "analysis" ? mode.onSolved : undefined);
 
   const completionNeedsRetry = error === COMPLETION_CONNECTION_ERROR && shouldAutoComplete(game);
 
@@ -155,30 +103,21 @@ export function PlayPage({
       {isPartyGame && (
         <PartyLobbyProgressPanel
           open={session.lobbyOpen}
-          progress={lobbyProgress}
-          loading={lobbyProgressLoading}
-          error={lobbyProgressError}
+          progress={lobbyProgress.progress}
+          loading={lobbyProgress.loading}
+          error={lobbyProgress.error}
           onClose={() => session.setLobbyOpen(false)}
         />
       )}
       {error && (
-        <div className="px-4 pt-2">
-          <ErrorBanner
-            message={error}
-            onAutoClear={completionNeedsRetry ? undefined : clearError}
-          />
-          {completionNeedsRetry ? (
-            <button
-              type="button"
-              className="mt-2 border border-destructive/40 bg-transparent px-3 py-2 font-mono text-sm tracking-wide text-destructive"
-              onClick={() => {
-                void finishCompletedGame(game.id, getElapsedSeconds());
-              }}
-            >
-              Try again
-            </button>
-          ) : null}
-        </div>
+        <PlayErrorNotice
+          message={error}
+          needsRetry={completionNeedsRetry}
+          onClearError={actions.clearError}
+          onRetry={() => {
+            void actions.finishCompletedGame(game.id, getElapsedSeconds());
+          }}
+        />
       )}
       {phase === "completing" && (
         <p className="flex flex-1 items-center justify-center font-display text-lg italic text-muted-foreground">
@@ -191,32 +130,24 @@ export function PlayPage({
         mode={mode}
         isCompleted={isCompleted}
         showAnalysisSolved={showAnalysisSolved}
-        lessonKeepSolving={lessonKeepSolving}
+        lessonKeepSolving={lessonCards.keepSolving}
         onLeaveToHome={onLeaveToHome}
         onOpenRating={onOpenRating}
         onOpenPartyResults={onOpenPartyResults}
       />
-      {(isPlaying || showLessonSuccess) && (
+      {(isPlaying || lessonCards.showSuccess) && (
         <div
           className="gazette-play-board"
           onPointerDown={session.handleBoardBackgroundPointerDown}
         >
-          {showLessonBrief && (
-            <LessonBriefCard
-              technique={game.lesson_technique ?? null}
-              onDismiss={() => setLessonBriefOpen(false)}
-            />
-          )}
-          {mode.kind === "lesson" && showLessonSuccess && (
-            <LessonSuccessCard
-              technique={game.lesson_technique ?? null}
-              practiceBusy={mode.practiceBusy}
-              practiceError={mode.practiceError}
-              onKeepSolving={() => setLessonKeepSolving(true)}
-              onTryAnotherPuzzle={mode.onTryAnotherPuzzle}
-              onBackToGuide={mode.onBackToGuide}
-            />
-          )}
+          <PlayLessonCards
+            mode={mode}
+            technique={game.lesson_technique ?? null}
+            showBrief={lessonCards.showBrief}
+            showSuccess={lessonCards.showSuccess}
+            onDismissBrief={lessonCards.dismissBrief}
+            onKeepSolving={lessonCards.continueSolving}
+          />
           <PlayBoard
             game={game}
             assists={assists}

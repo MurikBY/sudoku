@@ -1,8 +1,9 @@
 import { loadInfoGuideLang } from "@/content/infoGuideCopy";
 import { lessonArticleId } from "@/lib/play/lessonArticleId";
+import type { PlayMode } from "@/lib/play/playMode";
 import { lessonStartBrief, techniqueArticle } from "@/content/techniquesGuideCopy";
 
-export function LessonBriefCard({
+function LessonBriefCard({
   technique,
   onDismiss,
 }: {
@@ -45,7 +46,7 @@ function lessonSuccessCopy(technique: string): { title: string; body: string } {
   };
 }
 
-export function LessonSuccessCard({
+function LessonSuccessCard({
   technique,
   practiceBusy,
   practiceError,
@@ -100,5 +101,39 @@ export function LessonSuccessCard({
         </div>
       </div>
     </div>
+  );
+}
+
+type PlayLessonCardsProps = {
+  mode: PlayMode;
+  technique: string | null;
+  showBrief: boolean;
+  showSuccess: boolean;
+  onDismissBrief: () => void;
+  onKeepSolving: () => void;
+};
+
+export function PlayLessonCards({
+  mode,
+  technique,
+  showBrief,
+  showSuccess,
+  onDismissBrief,
+  onKeepSolving,
+}: PlayLessonCardsProps) {
+  return (
+    <>
+      {showBrief && <LessonBriefCard technique={technique} onDismiss={onDismissBrief} />}
+      {mode.kind === "lesson" && showSuccess && (
+        <LessonSuccessCard
+          technique={technique}
+          practiceBusy={mode.practiceBusy}
+          practiceError={mode.practiceError}
+          onKeepSolving={onKeepSolving}
+          onTryAnotherPuzzle={mode.onTryAnotherPuzzle}
+          onBackToGuide={mode.onBackToGuide}
+        />
+      )}
+    </>
   );
 }
