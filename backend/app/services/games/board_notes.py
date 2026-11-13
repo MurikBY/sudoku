@@ -47,6 +47,29 @@ def notes_changed_cell_indices(
     return changed
 
 
+def notes_of_changed_cells(
+    before: dict[str, list[int]],
+    after: dict[str, list[int]],
+) -> dict[str, list[int]]:
+    return {
+        str(cell_index): list(before.get(str(cell_index), []))
+        for cell_index in notes_changed_cell_indices(before, after)
+    }
+
+
+def with_cell_notes(
+    notes: dict[str, list[int]],
+    cell_notes: dict[str, list[int]],
+) -> dict[str, list[int]]:
+    updated = copy_notes_map(notes)
+    for cell_key, digits in cell_notes.items():
+        if digits:
+            updated[cell_key] = list(digits)
+        else:
+            updated.pop(cell_key, None)
+    return updated
+
+
 def replace_notes_map(game: Game, target_notes: dict[str, list[int]]) -> None:
     current_notes = dict(game.notes)
     changed_cell_indices = notes_changed_cell_indices(current_notes, target_notes)

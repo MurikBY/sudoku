@@ -49,7 +49,8 @@ StoredEvent = Annotated[
 class UndoEntry(_StoredModel):
     index: CellIndex
     previous_value: _CellValue | None
-    previous_notes: NotesMap
+    # Only the cells whose marks the action changed, as they were before it. [] means no marks.
+    notes_before: NotesMap
 
 
 events_adapter: TypeAdapter[list[StoredEvent]] = TypeAdapter(list[StoredEvent])
@@ -108,12 +109,12 @@ def dump_undo_entry(
     *,
     index: int,
     previous_value: int | None,
-    previous_notes: dict[str, list[int]],
+    notes_before: dict[str, list[int]],
 ) -> dict[str, Any]:
     entry = UndoEntry(
         index=index,
         previous_value=previous_value,
-        previous_notes=previous_notes,
+        notes_before=notes_before,
     )
     return entry.model_dump()
 
@@ -123,4 +124,7 @@ def read_undo_entry(raw: object) -> tuple[int, int | None, dict[str, list[int]]]
         entry = UndoEntry.model_validate(raw)
     except ValidationError as error:
         raise RuntimeError("invalid undo entry") from error
-    return entry.index, entry.previous_value, _normalize_notes_map(entry.previous_notes)
+    notes_before = {
+        cell_key: sorted(set(digits)) for cell_key, digits in entry.notes_before.items()
+    }
+    return entry.index, entry.previous_value, notes_before

@@ -8,9 +8,11 @@ from app.models.game import Game
 from app.services.game_events import append_game_event
 from app.services.games.board_notes import (
     clear_cell_notes,
-    copy_notes_map,
+    notes_changed_cell_indices,
+    notes_of_changed_cells,
     replace_notes_map,
     validate_notes_target,
+    with_cell_notes,
 )
 from app.services.games.errors import InvalidMove, InvalidNotes, UndoUnavailable
 from app.services.games.lifecycle import credit_play_time
@@ -23,6 +25,9 @@ from app.services.lesson_progress_service import (
 )
 from app.services.sudoku.grid import EMPTY_CELL, parse_grid
 from app.services.sudoku.validator import validate_move
+
+# Bounds the row: an entry is small, but every write would otherwise add one forever.
+MAX_UNDO_ENTRIES = 200
 
 
 @dataclass(frozen=True)
@@ -37,16 +42,15 @@ def push_undo_entry(
     *,
     cell_index: int,
     previous_value: int | None,
+    notes_before_action: dict[str, list[int]],
 ) -> None:
-    stack = list(game.undo_stack)
-    stack.append(
-        dump_undo_entry(
-            index=cell_index,
-            previous_value=previous_value,
-            previous_notes=copy_notes_map(game.notes),
-        ),
+    # Called after the action, so the entry keeps only the marks it changed.
+    entry = dump_undo_entry(
+        index=cell_index,
+        previous_value=previous_value,
+        notes_before=notes_of_changed_cells(notes_before_action, game.notes),
     )
-    game.undo_stack = stack
+    game.undo_stack = [*game.undo_stack, entry][-MAX_UNDO_ENTRIES:]
     flag_modified(game, "undo_stack")
 
 
@@ -54,16 +58,13 @@ def _cells_changed_by_undo(
     game: Game,
     cell_index: int,
     previous_value: int | None,
-    previous_notes: dict[str, list[int]],
+    restored_notes: dict[str, list[int]],
 ) -> list[int]:
-    affected: set[int] = set()
+    affected = set(notes_changed_cell_indices(game.notes, restored_notes))
     if previous_value is not None:
         current_value = parse_grid(game.current_grid)[cell_index]
         if current_value != previous_value:
             affected.add(cell_index)
-    for notes_cell_key in set(game.notes) | set(previous_notes):
-        if game.notes.get(notes_cell_key, []) != previous_notes.get(notes_cell_key, []):
-            affected.add(int(notes_cell_key))
     return sorted(affected)
 
 
@@ -78,12 +79,12 @@ async def undo_last_move(
     if not stack:
         raise UndoUnavailable("nothing to undo")
     objective_was_met = lesson_objective_is_met(game)
-    cell_index, previous_value, previous_notes = read_undo_entry(stack[-1])
+    cell_index, previous_value, notes_before = read_undo_entry(stack[-1])
     flashed_cell_indices = _cells_changed_by_undo(
         game,
         cell_index,
         previous_value,
-        previous_notes,
+        with_cell_notes(game.notes, notes_before),
     )
     stack.pop()
 
@@ -104,11 +105,12 @@ async def undo_last_move(
                 append_game_event(game, "set", cell=cell_index, value=previous_value)
 
     try:
-        for notes_cell_key in previous_notes:
-            validate_notes_target(game.puzzle, game.current_grid, int(notes_cell_key))
+        for notes_cell_key, digits in notes_before.items():
+            if digits:
+                validate_notes_target(game.puzzle, game.current_grid, int(notes_cell_key))
     except ValueError as error:
         raise InvalidNotes(str(error)) from error
-    replace_notes_map(game, previous_notes)
+    replace_notes_map(game, with_cell_notes(game.notes, notes_before))
 
     game.undo_stack = stack
     flag_modified(game, "undo_stack")

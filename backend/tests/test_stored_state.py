@@ -51,19 +51,25 @@ def test_unsorted_notes_read_back_sorted_without_empty_cells() -> None:
 
 
 def test_undo_entry_keeps_zero_and_null_and_sorts_notes() -> None:
-    assert dump_undo_entry(index=4, previous_value=0, previous_notes={"1": [2]}) == {
+    assert dump_undo_entry(index=4, previous_value=0, notes_before={"1": [2]}) == {
         "index": 4,
         "previous_value": 0,
-        "previous_notes": {"1": [2]},
+        "notes_before": {"1": [2]},
     }
-    assert dump_undo_entry(index=4, previous_value=None, previous_notes={}) == {
+    assert dump_undo_entry(index=4, previous_value=None, notes_before={}) == {
         "index": 4,
         "previous_value": None,
-        "previous_notes": {},
+        "notes_before": {},
     }
+    # An empty list stays: that cell had no marks before the action.
     assert read_undo_entry(
-        {"index": 4, "previous_value": 0, "previous_notes": {"8": [3, 1, 1], "9": []}},
-    ) == (4, 0, {"8": [1, 3]})
+        {"index": 4, "previous_value": 0, "notes_before": {"8": [3, 1, 1], "9": []}},
+    ) == (4, 0, {"8": [1, 3], "9": []})
+
+
+def test_undo_entry_with_the_whole_notes_map_is_rejected() -> None:
+    with pytest.raises(RuntimeError, match="invalid undo entry"):
+        read_undo_entry({"index": 4, "previous_value": 0, "previous_notes": {"8": [1]}})
 
 
 @pytest.mark.parametrize(

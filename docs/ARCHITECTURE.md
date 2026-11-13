@@ -112,7 +112,7 @@ A solo game has no `party_id`. `party_members.game_id` stays empty until the par
 JSONB columns:
 
 - `games.notes` maps a cell index to its pencil digits.
-- `games.undo_stack` is a list of entries. Each entry holds `index`, `previous_value`, and `previous_notes`.
+- `games.undo_stack` is a list of entries, the newest 200. Each entry holds `index`, `previous_value`, and `notes_before`: the pencil marks the action changed, as they were before it, where `[]` means the cell had none.
 - `games.events` is a list of `set`, `clear`, `notes`, and `hint` events.
 - `games.assists` and `parties.assists` hold the eight assist flags.
 - `users.preferences` holds `difficulty`, `assists`, and `custom_assists`.

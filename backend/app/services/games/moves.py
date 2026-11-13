@@ -6,7 +6,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.game import Game
 from app.schemas.preferences import GameAssistsPayload
 from app.services.game_events import append_game_event
-from app.services.games.board_notes import clear_cell_notes, remove_digit_from_peer_notes
+from app.services.games.board_notes import (
+    clear_cell_notes,
+    copy_notes_map,
+    remove_digit_from_peer_notes,
+)
 from app.services.games.errors import InvalidMove
 from app.services.games.lifecycle import credit_play_time
 from app.services.games.queries import get_game_in_progress
@@ -63,11 +67,7 @@ async def apply_move(
         await session.commit()
         return MoveResult(game=game, is_mistake=False)
 
-    push_undo_entry(
-        game,
-        cell_index=index,
-        previous_value=current_digit,
-    )
+    notes_before_action = copy_notes_map(game.notes)
     is_mistake = is_move_mistake(index, value, game.solution)
     grid_chars = list(game.current_grid)
     grid_chars[index] = str(value)
@@ -87,6 +87,12 @@ async def apply_move(
             value=value,
             peer_notes=peer_notes or None,
         )
+    push_undo_entry(
+        game,
+        cell_index=index,
+        previous_value=current_digit,
+        notes_before_action=notes_before_action,
+    )
     if is_mistake:
         game.mistakes_count += 1
     if elapsed_seconds is not None:

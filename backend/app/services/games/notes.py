@@ -5,7 +5,11 @@ from sqlalchemy.orm.attributes import flag_modified
 
 from app.models.game import Game
 from app.services.game_events import append_game_event
-from app.services.games.board_notes import normalize_note_digits, validate_notes_target
+from app.services.games.board_notes import (
+    copy_notes_map,
+    normalize_note_digits,
+    validate_notes_target,
+)
 from app.services.games.errors import InvalidNotes
 from app.services.games.lifecycle import credit_play_time
 from app.services.games.queries import get_game_in_progress
@@ -37,8 +41,7 @@ async def apply_notes(
         await session.commit()
         return game
 
-    push_undo_entry(game, cell_index=cell_index, previous_value=None)
-
+    notes_before_action = copy_notes_map(game.notes)
     notes = dict(game.notes)
     if normalized_digits:
         notes[cell_key] = normalized_digits
@@ -48,6 +51,12 @@ async def apply_notes(
     game.pencil_count += 1
     flag_modified(game, "notes")
     append_game_event(game, "notes", cell=cell_index, notes=normalized_digits)
+    push_undo_entry(
+        game,
+        cell_index=cell_index,
+        previous_value=None,
+        notes_before_action=notes_before_action,
+    )
     if elapsed_seconds is not None:
         credit_play_time(game, elapsed_seconds)
 
