@@ -122,6 +122,25 @@ describe("useNotes addNote", () => {
     expect(setCellNotes).toHaveBeenCalledWith("game", 0, [1, 5], 8);
   });
 
+  it("shows the server's notes for the cell, none when the answer omits it", async () => {
+    const gameRef = { current: playingGame({ notes: { "0": [1], "1": [4] } }) };
+    vi.mocked(setCellNotes).mockResolvedValue(playingGame({ notes: { "1": [4] } }));
+
+    const { result } = renderHook(() =>
+      useNotes({
+        enqueueBoardAction: createBoardQueue(),
+        gameRef,
+        selectedIndexRef: { current: null },
+        dispatch: vi.fn(),
+      }),
+    );
+
+    await result.current.addNote(5, 1, 0);
+
+    expect(setCellNotes).toHaveBeenCalledWith("game", 0, [1, 5], 1);
+    expect(gameRef.current.notes).toEqual({ "1": [4] });
+  });
+
   it("drops the painted digit from the latest notes when the request fails", async () => {
     const gameRef = { current: playingGame({ notes: { "0": [1, 2] } }) };
     const dispatch: Dispatch<BoardAction> = vi.fn();

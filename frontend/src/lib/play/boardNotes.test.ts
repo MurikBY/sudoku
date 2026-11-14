@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  mergedCellNotes,
   notesWithCellDigits,
   peerNoteClearIndices,
   shouldAutoComplete,
@@ -62,21 +61,5 @@ describe("notesWithCellDigits", () => {
     expect(withDigits).toEqual({ "0": [2, 4], "1": [9] });
     expect(withDigits["0"]).not.toBe(digits);
     expect(notesWithCellDigits({ "0": [2, 4], "1": [9] }, 0, [])).toEqual({ "1": [9] });
-  });
-});
-
-describe("mergedCellNotes", () => {
-  it("keeps an optimistic digit on another cell", () => {
-    expect(mergedCellNotes({ "0": [9], "1": [4] }, 0, [1, 2])).toEqual({
-      "0": [1, 2],
-      "1": [4],
-    });
-  });
-
-  it("stores an empty digit list without deleting the key", () => {
-    expect(mergedCellNotes({ "0": [1], "1": [4] }, 0, [])).toEqual({
-      "0": [],
-      "1": [4],
-    });
   });
 });

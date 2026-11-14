@@ -59,14 +59,3 @@ export function shouldAutoComplete(
     boardResult.wrong_digit_indices.length === 0
   );
 }
-
-export function mergedCellNotes(
-  latestNotes: CellNotesMap,
-  cellIndex: number,
-  digits: readonly number[],
-): CellNotesMap {
-  return {
-    ...latestNotes,
-    [String(cellIndex)]: [...digits],
-  };
-}

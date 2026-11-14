@@ -4,7 +4,7 @@ import { setCellNotes } from "@/api/games";
 import type { CellNotesMap, Game } from "@/api/types";
 import type { BoardAction } from "@/hooks/boardState";
 import { formatApiErrorMessage } from "@/lib/api/apiError";
-import { mergedCellNotes, notesWithCellDigits } from "@/lib/play/boardNotes";
+import { notesWithCellDigits } from "@/lib/play/boardNotes";
 import {
   addNoteDigit,
   cellDigitValue,
@@ -58,10 +58,10 @@ async function sendPaintedNote(
     const updatedGame = await setCellNotes(queuedGame.id, cellIndex, digitsToSend, elapsedSeconds);
     const mergedGame = {
       ...updatedGame,
-      notes: mergedCellNotes(
+      notes: notesWithCellDigits(
         store.gameRef.current.notes,
         cellIndex,
-        updatedGame.notes[String(cellIndex)] ?? digitsToSend,
+        notesForCell(updatedGame.notes, cellIndex),
       ),
     };
     store.storeGame(mergedGame);
