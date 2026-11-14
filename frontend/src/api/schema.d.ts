@@ -687,6 +687,16 @@ export interface components {
             hard: components["schemas"]["RatingDifficultyResponse"];
             medium: components["schemas"]["RatingDifficultyResponse"];
         };
+        /** ClearEventPayload */
+        ClearEventPayload: {
+            /** Cell */
+            cell: number;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "clear";
+        };
         /** CompleteGameRequest */
         CompleteGameRequest: {
             /** Elapsed Seconds */
@@ -779,24 +789,6 @@ export interface components {
             sticky_digit: boolean;
             /** Unit Complete Animation */
             unit_complete_animation: boolean;
-        };
-        /** GameEvent */
-        GameEvent: {
-            /** Cell */
-            cell?: number | null;
-            /**
-             * Kind
-             * @enum {string}
-             */
-            kind: "set" | "clear" | "notes" | "hint";
-            /** Notes */
-            notes?: number[] | null;
-            /** Peer Notes */
-            peer_notes?: {
-                [key: string]: number[];
-            } | null;
-            /** Value */
-            value?: number | null;
         };
         /** GameHistoryItem */
         GameHistoryItem: {
@@ -919,7 +911,7 @@ export interface components {
             /** Elapsed Seconds */
             elapsed_seconds: number;
             /** Events */
-            events: components["schemas"]["GameEvent"][];
+            events: (components["schemas"]["SetEventPayload"] | components["schemas"]["HintEventPayload"] | components["schemas"]["ClearEventPayload"] | components["schemas"]["NotesEventPayload"])[];
             /** Hints Count */
             hints_count: number;
             /**
@@ -957,6 +949,22 @@ export interface components {
          * @enum {string}
          */
         GameStatus: "in_progress" | "completed" | "abandoned";
+        /** HintEventPayload */
+        HintEventPayload: {
+            /** Cell */
+            cell: number;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "hint";
+            /** Peer Notes */
+            peer_notes: {
+                [key: string]: number[];
+            } | null;
+            /** Value */
+            value: number;
+        };
         /** HintRequest */
         HintRequest: {
             /** Elapsed Seconds */
@@ -1157,6 +1165,18 @@ export interface components {
             undo_count: number;
             /** Wrong Digit Indices */
             wrong_digit_indices: number[];
+        };
+        /** NotesEventPayload */
+        NotesEventPayload: {
+            /** Cell */
+            cell: number;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "notes";
+            /** Notes */
+            notes: number[];
         };
         /**
          * NotesIssueKind
@@ -1391,6 +1411,22 @@ export interface components {
             games_completed: number;
             /** Games Started */
             games_started: number;
+        };
+        /** SetEventPayload */
+        SetEventPayload: {
+            /** Cell */
+            cell: number;
+            /**
+             * @description discriminator enum property added by openapi-typescript
+             * @enum {string}
+             */
+            kind: "set";
+            /** Peer Notes */
+            peer_notes: {
+                [key: string]: number[];
+            } | null;
+            /** Value */
+            value: number;
         };
         /** StartPartyRequest */
         StartPartyRequest: {

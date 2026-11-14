@@ -1,5 +1,7 @@
 from typing import assert_never
 
+from pydantic import TypeAdapter
+
 from app.models.enums import GameStatus
 from app.models.game import Game
 from app.schemas.game import (
@@ -26,11 +28,13 @@ from app.services.games.lessons import TaughtLesson
 from app.services.games.moves import MoveResult
 from app.services.games.queries import GameHistoryEntry
 from app.services.games.review import GameReview
-from app.services.games.stored_state import dump_stored_event, read_events, read_notes
+from app.services.games.stored_state import read_events, read_notes
 from app.services.games.undo import UndoResult
 from app.services.lesson_progress_service import TechniqueProgress
 from app.services.sudoku.lessons.runtime import lesson_runtime
 from app.services.sudoku.validator import conflict_indices, wrong_digit_indices
+
+_game_event_adapter: TypeAdapter[GameEvent] = TypeAdapter(GameEvent)
 
 
 def game_response(game: Game, *, completion: CompletionRecap | None) -> GameResponse:
@@ -98,7 +102,8 @@ def game_review_response(
     game = review.game
     assists = GameAssistsPayload.model_validate(game.assists)
     events = [
-        GameEvent.model_validate(dump_stored_event(event)) for event in read_events(game.events)
+        _game_event_adapter.validate_python(event.model_dump())
+        for event in read_events(game.events)
     ]
     play_from_here_available = (
         game.status != GameStatus.in_progress or game.user_id != viewer_user_id

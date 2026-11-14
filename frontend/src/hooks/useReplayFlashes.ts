@@ -21,13 +21,9 @@ function replayStepFlash(
   if (event === undefined) {
     return null;
   }
-  const eventCell = event.cell;
-  if (eventCell == null || eventCell < 0 || eventCell > 80) {
-    return null;
-  }
-  const peerCells = peerNoteCellIndices(event.peer_notes);
-  const suppressPeerNotes = (event.kind === "set" || event.kind === "hint") && peerCells.length > 0;
-  return { eventCell, peerCells: suppressPeerNotes ? peerCells : [] };
+  const peerCells =
+    event.kind === "set" || event.kind === "hint" ? peerNoteCellIndices(event.peer_notes) : [];
+  return { eventCell: event.cell, peerCells };
 }
 
 // A single step forward flashes its cell. A digit that cleared peer notes keeps those notes

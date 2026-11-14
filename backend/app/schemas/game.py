@@ -138,13 +138,41 @@ class GameHistoryResponse(BaseModel):
 
 GameEventKind = Literal["set", "clear", "notes", "hint"]
 
+EventCell = Annotated[int, Field(ge=0, le=80)]
+EventDigit = Annotated[int, Field(ge=1, le=9)]
+# Keys are cell indices. An empty list records a peer cell whose notes were cleared.
+PeerNotes = dict[Annotated[str, Field(pattern=r"^(?:0|[1-9]|[1-7][0-9]|80)$")], list[EventDigit]]
 
-class GameEvent(BaseModel):
-    kind: GameEventKind
-    cell: int | None = None
-    value: int | None = None
-    notes: list[int] | None = None
-    peer_notes: dict[str, list[int]] | None = None
+
+class SetEventPayload(BaseModel):
+    kind: Literal["set"]
+    cell: EventCell
+    value: EventDigit
+    peer_notes: PeerNotes | None
+
+
+class HintEventPayload(BaseModel):
+    kind: Literal["hint"]
+    cell: EventCell
+    value: EventDigit
+    peer_notes: PeerNotes | None
+
+
+class ClearEventPayload(BaseModel):
+    kind: Literal["clear"]
+    cell: EventCell
+
+
+class NotesEventPayload(BaseModel):
+    kind: Literal["notes"]
+    cell: EventCell
+    notes: list[EventDigit]
+
+
+GameEvent = Annotated[
+    SetEventPayload | HintEventPayload | ClearEventPayload | NotesEventPayload,
+    Field(discriminator="kind"),
+]
 
 
 class GameReviewResponse(BaseModel):

@@ -211,9 +211,9 @@ async def test_repeated_wrong_digit_does_not_count_another_mistake(
     review = await async_client.get(f"/api/games/{game_id}/review", headers=auth_headers)
     assert review.status_code == 200
     set_events = [event for event in review.json()["events"] if event["kind"] == "set"]
-    assert len(set_events) == 1
-    assert set_events[0]["cell"] == cell_index
-    assert set_events[0]["value"] == wrong_value
+    assert set_events == [
+        {"kind": "set", "cell": cell_index, "value": wrong_value, "peer_notes": None},
+    ]
 
 
 @pytest.mark.asyncio

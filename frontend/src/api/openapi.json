@@ -97,6 +97,27 @@
         "title": "CleanBestLeaderboardResponse",
         "type": "object"
       },
+      "ClearEventPayload": {
+        "properties": {
+          "cell": {
+            "maximum": 80.0,
+            "minimum": 0.0,
+            "title": "Cell",
+            "type": "integer"
+          },
+          "kind": {
+            "const": "clear",
+            "title": "Kind",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "cell"
+        ],
+        "title": "ClearEventPayload",
+        "type": "object"
+      },
       "CompleteGameRequest": {
         "additionalProperties": false,
         "properties": {
@@ -435,78 +456,6 @@
           "sticky_digit"
         ],
         "title": "GameAssistsPayload",
-        "type": "object"
-      },
-      "GameEvent": {
-        "properties": {
-          "cell": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Cell"
-          },
-          "kind": {
-            "enum": [
-              "set",
-              "clear",
-              "notes",
-              "hint"
-            ],
-            "title": "Kind",
-            "type": "string"
-          },
-          "notes": {
-            "anyOf": [
-              {
-                "items": {
-                  "type": "integer"
-                },
-                "type": "array"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Notes"
-          },
-          "peer_notes": {
-            "anyOf": [
-              {
-                "additionalProperties": {
-                  "items": {
-                    "type": "integer"
-                  },
-                  "type": "array"
-                },
-                "type": "object"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Peer Notes"
-          },
-          "value": {
-            "anyOf": [
-              {
-                "type": "integer"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Value"
-          }
-        },
-        "required": [
-          "kind"
-        ],
-        "title": "GameEvent",
         "type": "object"
       },
       "GameHistoryItem": {
@@ -884,7 +833,29 @@
           },
           "events": {
             "items": {
-              "$ref": "#/components/schemas/GameEvent"
+              "discriminator": {
+                "mapping": {
+                  "clear": "#/components/schemas/ClearEventPayload",
+                  "hint": "#/components/schemas/HintEventPayload",
+                  "notes": "#/components/schemas/NotesEventPayload",
+                  "set": "#/components/schemas/SetEventPayload"
+                },
+                "propertyName": "kind"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/SetEventPayload"
+                },
+                {
+                  "$ref": "#/components/schemas/HintEventPayload"
+                },
+                {
+                  "$ref": "#/components/schemas/ClearEventPayload"
+                },
+                {
+                  "$ref": "#/components/schemas/NotesEventPayload"
+                }
+              ]
             },
             "title": "Events",
             "type": "array"
@@ -983,6 +954,56 @@
         ],
         "title": "GameStatus",
         "type": "string"
+      },
+      "HintEventPayload": {
+        "properties": {
+          "cell": {
+            "maximum": 80.0,
+            "minimum": 0.0,
+            "title": "Cell",
+            "type": "integer"
+          },
+          "kind": {
+            "const": "hint",
+            "title": "Kind",
+            "type": "string"
+          },
+          "peer_notes": {
+            "anyOf": [
+              {
+                "patternProperties": {
+                  "^(?:0|[1-9]|[1-7][0-9]|80)$": {
+                    "items": {
+                      "maximum": 9.0,
+                      "minimum": 1.0,
+                      "type": "integer"
+                    },
+                    "type": "array"
+                  }
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Peer Notes"
+          },
+          "value": {
+            "maximum": 9.0,
+            "minimum": 1.0,
+            "title": "Value",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "kind",
+          "cell",
+          "value",
+          "peer_notes"
+        ],
+        "title": "HintEventPayload",
+        "type": "object"
       },
       "HintRequest": {
         "additionalProperties": false,
@@ -1677,6 +1698,37 @@
         "title": "MoveCellResponse",
         "type": "object"
       },
+      "NotesEventPayload": {
+        "properties": {
+          "cell": {
+            "maximum": 80.0,
+            "minimum": 0.0,
+            "title": "Cell",
+            "type": "integer"
+          },
+          "kind": {
+            "const": "notes",
+            "title": "Kind",
+            "type": "string"
+          },
+          "notes": {
+            "items": {
+              "maximum": 9.0,
+              "minimum": 1.0,
+              "type": "integer"
+            },
+            "title": "Notes",
+            "type": "array"
+          }
+        },
+        "required": [
+          "kind",
+          "cell",
+          "notes"
+        ],
+        "title": "NotesEventPayload",
+        "type": "object"
+      },
       "NotesIssueKind": {
         "enum": [
           "illegal",
@@ -2342,6 +2394,56 @@
           "clean_wins"
         ],
         "title": "RatingDifficultyResponse",
+        "type": "object"
+      },
+      "SetEventPayload": {
+        "properties": {
+          "cell": {
+            "maximum": 80.0,
+            "minimum": 0.0,
+            "title": "Cell",
+            "type": "integer"
+          },
+          "kind": {
+            "const": "set",
+            "title": "Kind",
+            "type": "string"
+          },
+          "peer_notes": {
+            "anyOf": [
+              {
+                "patternProperties": {
+                  "^(?:0|[1-9]|[1-7][0-9]|80)$": {
+                    "items": {
+                      "maximum": 9.0,
+                      "minimum": 1.0,
+                      "type": "integer"
+                    },
+                    "type": "array"
+                  }
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Peer Notes"
+          },
+          "value": {
+            "maximum": 9.0,
+            "minimum": 1.0,
+            "title": "Value",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "kind",
+          "cell",
+          "value",
+          "peer_notes"
+        ],
+        "title": "SetEventPayload",
         "type": "object"
       },
       "StartPartyRequest": {

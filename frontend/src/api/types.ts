@@ -26,7 +26,7 @@ export type PartyProgress = Schemas["PartyProgressResponse"];
 
 export type PartyResults = Schemas["PartyResultsResponse"];
 
-export type GameEvent = Schemas["GameEvent"];
+export type GameEvent = Schemas["GameReviewResponse"]["events"][number];
 
 export type GameHistoryItem = Schemas["GameHistoryItem"];
 

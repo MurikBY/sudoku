@@ -9,39 +9,67 @@ export type ReplayEventsOptions = {
   suppressLastPeerNotes?: boolean;
 };
 
-function applyPeerNotes(
-  notes: CellNotesMap,
-  peerNotes: Record<string, number[]> | null | undefined,
-): void {
-  if (!peerNotes) {
-    return;
-  }
-  for (const [cellKey, rawDigits] of Object.entries(peerNotes)) {
-    const cell = Number(cellKey);
-    if (!Number.isInteger(cell) || cell < 0 || cell > 80) {
-      continue;
-    }
-    const remaining = [...new Set(rawDigits.filter((digit) => digit >= 1 && digit <= 9))].sort(
-      (left, right) => left - right,
-    );
-    if (remaining.length > 0) {
-      notes[cellKey] = remaining;
-    } else {
-      delete notes[cellKey];
-    }
+type PeerNotes = Record<string, number[]> | null;
+
+// The server validates every event before it sends one, so replay only applies them.
+// Same rule as the server replay: digits sorted and unique, an empty list removes the notes.
+function writeCellNotes(notes: CellNotesMap, cellKey: string, digits: readonly number[]): void {
+  const uniqueDigits = [...new Set(digits)].sort((left, right) => left - right);
+  if (uniqueDigits.length > 0) {
+    notes[cellKey] = uniqueDigits;
+  } else {
+    delete notes[cellKey];
   }
 }
 
-export function peerNoteCellIndices(
-  peerNotes: Record<string, number[]> | null | undefined,
-): number[] {
-  if (!peerNotes) {
+function applyPeerNotes(notes: CellNotesMap, peerNotes: PeerNotes): void {
+  if (peerNotes === null) {
+    return;
+  }
+  for (const [cellKey, digits] of Object.entries(peerNotes)) {
+    writeCellNotes(notes, cellKey, digits);
+  }
+}
+
+export function peerNoteCellIndices(peerNotes: PeerNotes): number[] {
+  if (peerNotes === null) {
     return [];
   }
   return Object.keys(peerNotes)
     .map((cellKey) => Number(cellKey))
-    .filter((cell) => Number.isInteger(cell) && cell >= 0 && cell <= 80)
     .sort((left, right) => left - right);
+}
+
+function replayEvent(
+  gridChars: string[],
+  notes: CellNotesMap,
+  event: GameEvent,
+  applyPeers: boolean,
+): void {
+  const cellKey = String(event.cell);
+  switch (event.kind) {
+    case "set":
+    case "hint":
+      gridChars[event.cell] = String(event.value);
+      delete notes[cellKey];
+      if (applyPeers) {
+        applyPeerNotes(notes, event.peer_notes);
+      }
+      return;
+    case "clear":
+      gridChars[event.cell] = "0";
+      delete notes[cellKey];
+      return;
+    case "notes":
+      if (gridChars[event.cell] === "0") {
+        writeCellNotes(notes, cellKey, event.notes);
+      }
+      return;
+    default: {
+      const unknownEvent: never = event;
+      throw new Error(`unknown replay event: ${JSON.stringify(unknownEvent)}`);
+    }
+  }
 }
 
 export function replayEventsToState(
@@ -56,46 +84,8 @@ export function replayEventsToState(
   const gridChars = puzzle.split("");
   const notes: CellNotesMap = {};
   for (const [eventIndex, event] of events.slice(0, eventCount).entries()) {
-    const cell = event.cell;
-    if (cell == null || cell < 0 || cell > 80) {
-      continue;
-    }
-    const cellKey = String(cell);
-    if (event.kind === "set" || event.kind === "hint") {
-      const value = event.value;
-      if (value == null || value < 1 || value > 9) {
-        continue;
-      }
-      gridChars[cell] = String(value);
-      delete notes[cellKey];
-      const skipPeer = options.suppressLastPeerNotes === true && eventIndex === eventCount - 1;
-      if (!skipPeer) {
-        applyPeerNotes(notes, event.peer_notes);
-      }
-      continue;
-    }
-    if (event.kind === "clear") {
-      gridChars[cell] = "0";
-      delete notes[cellKey];
-      continue;
-    }
-    if (event.kind === "notes") {
-      const eventNotes = event.notes;
-      if (eventNotes == null) {
-        throw new Error(`notes event ${eventIndex} has no notes`);
-      }
-      if (gridChars[cell] !== "0") {
-        continue;
-      }
-      const nextNotes = [...new Set(eventNotes.filter((digit) => digit >= 1 && digit <= 9))].sort(
-        (left, right) => left - right,
-      );
-      if (nextNotes.length > 0) {
-        notes[cellKey] = nextNotes;
-      } else {
-        delete notes[cellKey];
-      }
-    }
+    const skipPeers = options.suppressLastPeerNotes === true && eventIndex === eventCount - 1;
+    replayEvent(gridChars, notes, event, !skipPeers);
   }
   return {
     currentGrid: gridChars.join(""),
