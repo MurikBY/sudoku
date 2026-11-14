@@ -81,34 +81,38 @@ function LobbyChooser({ busy, onCreate, onChooseJoin }: LobbyChooserProps) {
   );
 }
 
+type CopyToast = "copied" | "failed" | null;
+
 function useCopiedCode() {
-  const [copied, setCopied] = useState(false);
+  const [toast, setToast] = useState<CopyToast>(null);
   const [pulse, setPulse] = useState(false);
 
   useEffect(() => {
-    if (!copied) {
+    if (toast === null) {
       return undefined;
     }
-    const timeoutId = window.setTimeout(() => setCopied(false), 2000);
+    const timeoutId = window.setTimeout(() => setToast(null), 2000);
     return () => window.clearTimeout(timeoutId);
-  }, [copied]);
+  }, [toast]);
 
   const copy = async (code: string) => {
     try {
       await copyText(code);
-      setPulse(true);
-      setCopied(true);
-      window.setTimeout(() => setPulse(false), 280);
     } catch {
       // Clipboard may be blocked outside a secure context.
+      setToast("failed");
+      return;
     }
+    setPulse(true);
+    setToast("copied");
+    window.setTimeout(() => setPulse(false), 280);
   };
 
-  return { copied, pulse, copy };
+  return { toast, pulse, copy };
 }
 
 function InviteCode({ code, busy }: { code: string; busy: boolean }) {
-  const { copied, pulse, copy } = useCopiedCode();
+  const { toast, pulse, copy } = useCopiedCode();
   return (
     <div className="party-lobby-code-wrap">
       <button
@@ -116,7 +120,7 @@ function InviteCode({ code, busy }: { code: string; busy: boolean }) {
         className={cn(
           "party-lobby-code",
           pulse && "party-lobby-code-pulse",
-          copied && "party-lobby-code-copied",
+          toast === "copied" && "party-lobby-code-copied",
         )}
         aria-label="Copy invite code"
         disabled={busy}
@@ -126,11 +130,14 @@ function InviteCode({ code, busy }: { code: string; busy: boolean }) {
       </button>
       <p className="party-lobby-code-hint">Tap code to copy</p>
       <p
-        className={cn("party-lobby-copied-toast", copied && "party-lobby-copied-toast-visible")}
+        className={cn(
+          "party-lobby-copied-toast",
+          toast !== null && "party-lobby-copied-toast-visible",
+        )}
         role="status"
         aria-live="polite"
       >
-        Code copied
+        {toast === "failed" ? "Could not copy code" : "Code copied"}
       </p>
     </div>
   );
