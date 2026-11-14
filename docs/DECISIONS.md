@@ -50,7 +50,7 @@ The poll is the recovery. A dropped socket still learns that the party started, 
 - `party_ws_tickets` holds unused tickets.
 - `bot/broadcast.py` holds broadcast drafts: `_awaiting_message_expires`, `_awaiting_confirm`, and `_album_collectors`.
 - `puzzle_generator` owns the child worker.
-- `pool_take_limit` holds the recent pool-take times.
+- `pool_take_limit` holds the recent pool-take times. A player's entry stays after they go idle: it is at most six numbers, and every deploy restarts the process.
 - `top10_drop_cooldown` holds when each player last got a Top 10 drop message.
 - The refill loop is an asyncio task on this process.
 
@@ -86,7 +86,7 @@ Migration `018` creates `rating_counter_archive` and seeds one row per difficult
 
 ## What would change at 100,000 users
 
-`games` is indexed on `user_id`, `party_id`, `share_code`, `is_analysis`, `is_lesson`, and `analysis_source_game_id`. `party_members` is indexed on `user_id` and `game_id` beside its `(party_id, user_id)` key. There is no index on `difficulty` or `status`.
+`games` is indexed on `user_id`, `party_id`, `share_code`, `is_analysis`, `is_lesson`, and `analysis_source_game_id`. `party_members` is indexed on `user_id` and `game_id` beside its `(party_id, user_id)` key. There is no index on `difficulty` or `status`. A partial index for the rating reads must use the `IS FALSE` form of `SCORED_GAME` in its predicate: PostgreSQL 16 does not match `NOT is_analysis` to the queries.
 
 A player's own stats filter by `user_id`. The rating page does not. `rating_summaries_by_difficulty` counts and sums every scored game, grouped by difficulty, on each read, then adds the archive. The clean-best list groups every clean win of a difficulty by user (`min(elapsed_seconds)`) and then keeps 10 rows. The rank counts every user with a better time, so that grouped set is read even though the page shows 10.
 
