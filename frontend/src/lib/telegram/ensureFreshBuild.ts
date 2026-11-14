@@ -35,6 +35,8 @@ export async function ensureFreshBuild(): Promise<void> {
     }
     serverBuildId = parseVersionPayload(await response.json()).buildId;
   } catch {
+    // The check is best effort: a throw here would show FatalErrorScreen to every player,
+    // while the bundle that is already loaded still works.
     return;
   }
 
