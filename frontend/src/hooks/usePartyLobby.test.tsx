@@ -138,6 +138,22 @@ describe("usePartyLobby", () => {
     vi.unstubAllGlobals();
   });
 
+  it("keeps Create away until the current party loads, and offers a retry when it fails", async () => {
+    vi.mocked(fetchCurrentParty).mockRejectedValueOnce(new Error("offline"));
+    const hook = renderLobby();
+
+    act(() => hook.result.current.openLobby());
+    expect(hook.result.current.phase).toBe("checking");
+    await settle();
+    expect(hook.result.current.phase).toBe("checkFailed");
+
+    vi.mocked(fetchCurrentParty).mockResolvedValueOnce(null);
+    act(() => hook.result.current.openLobby());
+    await settle();
+    expect(hook.result.current.phase).toBe("chooser");
+    expect(createParty).not.toHaveBeenCalled();
+  });
+
   it("opens the party socket after creating a lobby", async () => {
     const { result } = await createLobby();
 

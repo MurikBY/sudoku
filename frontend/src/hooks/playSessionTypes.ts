@@ -35,6 +35,7 @@ export type PlaySessionLobby = {
   onClose: () => void;
   onDismissClosed: () => void;
   onClearError: () => void;
+  onRetryCheck: () => void;
 };
 
 export type PlaySessionReview = {

@@ -15,10 +15,10 @@ function lobbyBackdropClick(
       void onLeave();
     };
   }
-  if (phase === "chooser") {
-    return onClose;
+  if (phase === "closed") {
+    return undefined;
   }
-  return undefined;
+  return onClose;
 }
 
 type PartyLobbyModalProps = {

@@ -1,6 +1,6 @@
 import type { Difficulty, Party, PartyMember } from "@/api/types";
 
-export type PartyLobbyPhase = "chooser" | "host" | "guest" | "closed";
+export type PartyLobbyPhase = "checking" | "checkFailed" | "chooser" | "host" | "guest" | "closed";
 
 export type PartyLobbyState = {
   open: boolean;
@@ -14,7 +14,8 @@ export type PartyLobbyState = {
 };
 
 export type PartyLobbyAction =
-  | { type: "openChooser" }
+  | { type: "openChecking" }
+  | { type: "checkFailed" }
   | { type: "showChooser" }
   | { type: "resumeWaiting"; party: Party; isHost: boolean }
   | { type: "applySnapshot"; party: Party }
@@ -93,8 +94,10 @@ export function partyLobbyReducer(
   action: PartyLobbyAction,
 ): PartyLobbyState {
   switch (action.type) {
-    case "openChooser":
-      return { ...state, open: true, error: null, joinCode: "" };
+    case "openChecking":
+      return { ...state, open: true, error: null, joinCode: "", phase: "checking" };
+    case "checkFailed":
+      return { ...state, phase: "checkFailed" };
     case "showChooser":
       return { ...state, phase: "chooser", joinedOk: false, party: null, members: [] };
     case "resumeWaiting":
@@ -114,7 +117,7 @@ export function partyLobbyReducer(
         ...state,
         open: false,
         error: null,
-        phase: state.phase === "closed" ? "chooser" : state.phase,
+        phase: state.phase === "host" || state.phase === "guest" ? state.phase : "chooser",
       };
     case "dismissClosed":
       return { ...state, open: false, phase: "chooser", error: null };

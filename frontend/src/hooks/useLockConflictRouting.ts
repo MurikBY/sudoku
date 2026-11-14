@@ -18,10 +18,10 @@ function lockConflictAction(
   if (phase === "host" || phase === "guest") {
     return "leave";
   }
-  if (phase === "chooser") {
-    return "close";
+  if (phase === "closed") {
+    return "stay";
   }
-  return "stay";
+  return "close";
 }
 
 type UseLockConflictRoutingArgs = {

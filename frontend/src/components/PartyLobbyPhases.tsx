@@ -260,12 +260,32 @@ function GuestLobby({ lobby }: { lobby: PlaySessionLobby }) {
   );
 }
 
+function LobbyCheckFailed({ onRetry }: { onRetry: () => void }) {
+  return (
+    <div className="party-lobby-body">
+      <div className="party-lobby-waiting">
+        <p>Could not load your lobby.</p>
+      </div>
+      <button type="button" className="party-lobby-secondary mt-2" onClick={onRetry}>
+        Try again
+      </button>
+    </div>
+  );
+}
+
 export function LobbyPhaseBody({ lobby }: { lobby: PlaySessionLobby }) {
   const { phase, party } = lobby;
-  if (phase === "chooser") {
+  if (phase === "checking" || phase === "chooser") {
     return (
-      <LobbyChooser busy={lobby.busy} onCreate={lobby.onCreate} onChooseJoin={lobby.onChooseJoin} />
+      <LobbyChooser
+        busy={lobby.busy || phase === "checking"}
+        onCreate={lobby.onCreate}
+        onChooseJoin={lobby.onChooseJoin}
+      />
     );
+  }
+  if (phase === "checkFailed") {
+    return <LobbyCheckFailed onRetry={lobby.onRetryCheck} />;
   }
   if (phase === "host" && party !== null) {
     return (

@@ -51,14 +51,21 @@ function withParty(patch: Partial<PartyLobbyState> = {}): PartyLobbyState {
 }
 
 describe("partyLobbyReducer", () => {
-  it("opens the chooser without clearing a party", () => {
+  it("opens in the checking phase without clearing a party", () => {
     const next = partyLobbyReducer(withParty({ error: "nope", joinCode: "OLD" }), {
-      type: "openChooser",
+      type: "openChecking",
     });
     expect(next.open).toBe(true);
+    expect(next.phase).toBe("checking");
     expect(next.error).toBeNull();
     expect(next.joinCode).toBe("");
     expect(next.party?.id).toBe("party");
+  });
+
+  it("closes a failed check back to the chooser", () => {
+    const failed = partyLobbyReducer(withParty({ phase: "checking" }), { type: "checkFailed" });
+    expect(failed.phase).toBe("checkFailed");
+    expect(partyLobbyReducer(failed, { type: "close" }).phase).toBe("chooser");
   });
 
   it("shows an empty chooser", () => {

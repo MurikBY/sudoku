@@ -28,8 +28,10 @@ export function usePartyLobbyEntry({
   connectSocket,
   handleStarted,
 }: UsePartyLobbyEntryArgs) {
+  // Create and Join stay disabled until the server says which lobby the player is in:
+  // creating over a lobby that failed to load would cancel it.
   const openLobby = useCallback(() => {
-    dispatch({ type: "openChooser" });
+    dispatch({ type: "openChecking" });
 
     void (async () => {
       try {
@@ -44,8 +46,10 @@ export function usePartyLobbyEntry({
           connectSocket(current.id);
           return;
         }
-      } catch {
-        // Fall through to chooser.
+      } catch (err) {
+        dispatch({ type: "checkFailed" });
+        reportLobbyError(dispatch, partyActionErrorMessage(err));
+        return;
       }
       dispatch({ type: "showChooser" });
     })();

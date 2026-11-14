@@ -75,6 +75,7 @@ export function usePlaySessionLobby({
     onClose: handleCloseLobby,
     onDismissClosed: handleDismissClosedLobby,
     onClearError: partyLobby.clearError,
+    onRetryCheck: openLobby,
   };
 
   return {
