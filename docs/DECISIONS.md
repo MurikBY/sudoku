@@ -22,6 +22,8 @@ The poll is the recovery. A dropped socket still learns that the party started, 
 
 **Trade-off.** The poll keeps running while the socket is open. A missed push waits up to 1500 ms. There is no reconnect. A broadcast runs inside the request that changed the lobby, so a send that takes longer than 2 seconds drops that socket from the lobby. That client then learns the rest from the poll.
 
+**Rejected: reconnect and poll only while the socket is down.** It would need a backoff, a fresh one-time ticket for every attempt, and a separate path for a start that happened while the socket was down: the snapshot sent on connect carries members and status, not the player's game id. A lobby lives a minute or two, and one `GET /api/parties/current` every 1.5 s per lobby member is cheap. The steady poll is one recovery path that covers every way the socket can drop.
+
 ## Move log
 
 **Decision.** `games.events` is a JSONB list on the game row. `current_grid` is the live 81-character board. `notes` and `undo_stack` are separate JSONB columns. `replay_available` is true when `events` is non-empty.
