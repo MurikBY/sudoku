@@ -80,12 +80,16 @@ export function replayEventsToState(
       continue;
     }
     if (event.kind === "notes") {
+      const eventNotes = event.notes;
+      if (eventNotes == null) {
+        throw new Error(`notes event ${eventIndex} has no notes`);
+      }
       if (gridChars[cell] !== "0") {
         continue;
       }
-      const nextNotes = [
-        ...new Set((event.notes ?? []).filter((digit) => digit >= 1 && digit <= 9)),
-      ].sort((left, right) => left - right);
+      const nextNotes = [...new Set(eventNotes.filter((digit) => digit >= 1 && digit <= 9))].sort(
+        (left, right) => left - right,
+      );
       if (nextNotes.length > 0) {
         notes[cellKey] = nextNotes;
       } else {

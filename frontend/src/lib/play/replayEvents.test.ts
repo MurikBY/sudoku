@@ -67,6 +67,13 @@ describe("replayEventsToState", () => {
     expect(onDigit.notes["2"]).toBeUndefined();
   });
 
+  it("throws on a notes event without notes, as the server replay does", () => {
+    expect(() => replay([{ kind: "notes", cell: 2 }])).toThrow("notes event 0 has no notes");
+    expect(() => replay([{ kind: "notes", cell: 2, notes: null }])).toThrow(
+      "notes event 0 has no notes",
+    );
+  });
+
   it("throws when the event count is outside the event list", () => {
     expect(() => replay([], -1)).toThrow(/event count out of range/);
     expect(() => replay([], 1)).toThrow(/event count out of range/);
