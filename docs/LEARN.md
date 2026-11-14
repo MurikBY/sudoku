@@ -48,3 +48,7 @@ The objective itself:
 "Continue solving this puzzle" hides the card and stays on the same game. If that game is already complete, the completion card shows instead. "Try another" starts a new practice game as above. "Return to Learning" leaves the game.
 
 `record_if_objective_met` writes a `LessonProgress` row only when the game is a lesson, `hints_count` is 0, and the objective is met. A repeated completion of the same position does not insert a second row. A hint therefore blocks the progress count and still leaves the success card, because the card reads the objective flag and not the progress row. Undo deletes that row when it changes the objective from met to unmet and this game wrote the row: `completed_at` is not earlier than the game's `started_at`. A completion from an earlier game of the same position stays, because a repeated insert does not move `completed_at`. The same insert runs again when undo restores a met objective on a lesson with no hints.
+
+## Not built yet
+
+TODO: an interface tour for new players. Nothing walks a first-time player through the board, pencil mode, the number pad, and the assists. The Guide explains them as reference pages, and Learn teaches solving techniques, not the controls.
