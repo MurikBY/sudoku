@@ -18,7 +18,7 @@ def create_dispatcher() -> Dispatcher:
 async def configure_chat_menu_button(bot: Bot) -> None:
     await bot.set_chat_menu_button(
         menu_button=MenuButtonWebApp(
-            text="Sudoku",
+            text="Play Sudoku",
             web_app=WebAppInfo(url=settings.WEBAPP_URL),
         ),
     )
