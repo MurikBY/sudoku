@@ -45,8 +45,9 @@ From a dump on the host:
 cd /opt/sudoku && ./deploy/restore-db.sh backups/sudoku-<stamp>.dump
 ```
 
-From the weekly copy in Telegram, decrypt it first, then copy the dump to the host and restore it the same way:
+From the weekly copy in Telegram, decrypt it first, then copy the dump to the host and restore it the same way. On macOS, copy the passphrase from the password manager and pipe it in from the clipboard, so it never lands in the shell history; clear the clipboard afterwards:
 
 ```bash
-BACKUP_PASSPHRASE='<passphrase>' openssl enc -d -aes-256-cbc -pbkdf2 -iter 600000 -pass env:BACKUP_PASSPHRASE -in sudoku-<stamp>.dump.enc -out sudoku-<stamp>.dump
+pbpaste | openssl enc -d -aes-256-cbc -pbkdf2 -iter 600000 -pass stdin -in sudoku-<stamp>.dump.enc -out sudoku-<stamp>.dump
+pbcopy < /dev/null
 ```
