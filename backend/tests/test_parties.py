@@ -1,11 +1,14 @@
 import asyncio
 import json
+import logging
 import os
 import uuid
 from datetime import UTC, datetime
 from types import SimpleNamespace
+from typing import cast
 
 import pytest
+from aiogram import Bot
 from httpx import AsyncClient
 from sqlalchemy import select, text
 from sqlalchemy.exc import DBAPIError
@@ -35,7 +38,11 @@ from app.services.party.lobby import (
 )
 from app.services.party.responses import party_to_response
 from app.services.party.start import start_party
-from app.services.party_notify import build_completion_message
+from app.services.party_notify import (
+    PartyCompletionNotice,
+    build_completion_message,
+    send_party_completion_notice,
+)
 from app.services.sudoku.carver import givens_count
 from app.services.sudoku.puzzle import GeneratedPuzzle
 from app.services.user_upsert import upsert_telegram_user
@@ -612,6 +619,27 @@ async def test_party_completion_notifies_guest_only(
 
     assert [chat_id for chat_id, _text in bot.messages] == [702]
     assert "finished the party puzzle" in bot.messages[0][1]
+
+
+@pytest.mark.asyncio
+async def test_party_completion_notice_logs_each_delivery(
+    caplog: pytest.LogCaptureFixture,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    party_id = uuid.uuid4()
+    notice = PartyCompletionNotice(party_id=party_id, text="done", recipient_ids=[705, 706])
+    bot = _NotifyBot()
+    # Alembic's fileConfig disables loggers created before the migration runs.
+    monkeypatch.setattr(logging.getLogger("app.services.party_notify"), "disabled", False)
+    caplog.set_level(logging.INFO, logger="app.services.party_notify")
+
+    await send_party_completion_notice(cast(Bot, bot), notice)
+
+    assert [chat_id for chat_id, _text in bot.messages] == [705, 706]
+    assert [r.message for r in caplog.records if r.name == "app.services.party_notify"] == [
+        f"party notify: sent user_id=705 party_id={party_id}",
+        f"party notify: sent user_id=706 party_id={party_id}",
+    ]
 
 
 @pytest.mark.asyncio

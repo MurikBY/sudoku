@@ -21,3 +21,5 @@ async def send_top10_drop_message(bot: Bot, user_id: int, difficulty: Difficulty
         await bot.send_message(chat_id=user_id, text=build_top10_drop_message(difficulty))
     except Exception:
         logger.exception("top10 drop notify: send failed user_id=%s", user_id)
+    else:
+        logger.info("top10 drop notify: sent user_id=%s difficulty=%s", user_id, difficulty.value)

@@ -94,6 +94,12 @@ async def send_party_completion_notice(bot: Bot, notice: PartyCompletionNotice) 
                 recipient_id,
                 notice.party_id,
             )
+        else:
+            logger.info(
+                "party notify: sent user_id=%s party_id=%s",
+                recipient_id,
+                notice.party_id,
+            )
 
 
 async def _party_results_button(bot: Bot, party_id: uuid.UUID) -> InlineKeyboardMarkup | None:

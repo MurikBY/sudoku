@@ -1,3 +1,4 @@
+import logging
 import uuid
 from datetime import UTC, datetime
 from typing import cast
@@ -12,7 +13,7 @@ from app.models.game import Game
 from app.models.user import User
 from app.services.game_completion_notify import announce_completion
 from app.services.preferences_service import DEFAULT_ASSISTS
-from app.services.rating_notify import build_top10_drop_message
+from app.services.rating_notify import build_top10_drop_message, send_top10_drop_message
 from app.services.stats.clean_best import completion_ranks, ejected_top10_user_id
 from app.services.top10_drop_cooldown import TOP10_DROP_COOLDOWN_SECONDS, Top10DropCooldown
 from app.services.user_reset_service import reset_user_play_data
@@ -205,6 +206,24 @@ async def test_reset_and_rewin_does_not_message_the_same_player_again(
             await reset_user_play_data(session, attacker)
 
     assert bot.messages == [(EASY_TENTH_USER_ID, build_top10_drop_message(Difficulty.easy))]
+
+
+@pytest.mark.asyncio
+async def test_top10_drop_message_logs_the_delivery(
+    caplog: pytest.LogCaptureFixture,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    bot = _RecordingBot()
+    # Alembic's fileConfig disables loggers created before the migration runs.
+    monkeypatch.setattr(logging.getLogger("app.services.rating_notify"), "disabled", False)
+    caplog.set_level(logging.INFO, logger="app.services.rating_notify")
+
+    await send_top10_drop_message(cast(Bot, bot), EASY_TENTH_USER_ID, Difficulty.easy)
+
+    assert bot.messages == [(EASY_TENTH_USER_ID, build_top10_drop_message(Difficulty.easy))]
+    assert [r.message for r in caplog.records if r.name == "app.services.rating_notify"] == [
+        f"top10 drop notify: sent user_id={EASY_TENTH_USER_ID} difficulty=easy",
+    ]
 
 
 def test_cooldown_allows_one_message_per_player_and_difficulty_per_window() -> None:
