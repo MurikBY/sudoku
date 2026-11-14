@@ -5,7 +5,7 @@ import type { PartyWsEvent } from "@/api/types";
 
 export type PartySocketHandlers = {
   onEvent: (event: PartyWsEvent) => void;
-  onTicketError: (error: unknown) => void;
+  onConnectError: (error: unknown) => void;
 };
 
 export function usePartySocket() {
@@ -35,7 +35,7 @@ export function usePartySocket() {
           url = await partyWebSocketUrl(partyId);
         } catch (err) {
           if (attemptRef.current === attempt) {
-            handlers.onTicketError(err);
+            handlers.onConnectError(err);
           }
           return;
         }
@@ -45,7 +45,9 @@ export function usePartySocket() {
         let socket: WebSocket;
         try {
           socket = new WebSocket(url);
-        } catch {
+        } catch (err) {
+          // A network failure arrives as onclose; a throw here is a bad URL or a blocked socket.
+          handlers.onConnectError(err);
           return;
         }
         socketRef.current = socket;

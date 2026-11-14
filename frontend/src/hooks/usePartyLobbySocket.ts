@@ -49,7 +49,7 @@ export function usePartyLobbySocket({
     [dispatch, handleStarted, markLobbyClosedByHost],
   );
 
-  const reportTicketError = useCallback(
+  const reportConnectError = useCallback(
     (err: unknown) => {
       reportLobbyError(dispatch, partyActionErrorMessage(err));
     },
@@ -59,9 +59,12 @@ export function usePartyLobbySocket({
   const connectSocket = useCallback(
     (partyId: string) => {
       rearmStart();
-      connectPartySocket(partyId, { onEvent: handlePartyEvent, onTicketError: reportTicketError });
+      connectPartySocket(partyId, {
+        onEvent: handlePartyEvent,
+        onConnectError: reportConnectError,
+      });
     },
-    [connectPartySocket, handlePartyEvent, rearmStart, reportTicketError],
+    [connectPartySocket, handlePartyEvent, rearmStart, reportConnectError],
   );
 
   return { connectSocket, markLobbyClosedByHost };
