@@ -40,7 +40,7 @@ export function assistsFromPayload(payload: AssistsPayload): GameAssists {
     dimCompletedDigits: payload.dim_completed_digits,
     unitCompleteAnimation: payload.unit_complete_animation,
     autoClearNotes: payload.auto_clear_notes,
-    stickyDigit: payload.sticky_digit ?? true,
+    stickyDigit: payload.sticky_digit,
   };
 }
 
