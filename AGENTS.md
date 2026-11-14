@@ -24,7 +24,7 @@ Backend layers: `api/` (routers, HTTP only) → `services/` (business logic) →
 - Verify with linters, tests, and throwaway scripts; do not start the application.
 - Telegram Mini App rules: HTTP auth is the `X-Init-Data` header, verified with HMAC and `compare_digest`, rejected when `auth_date` is older than 24 hours or more than 60 seconds in the future. WebSocket auth uses a one-time ticket, never `initData` in the URL. `index.html` and `version.json` are served with `no-store`; hashed assets are `immutable`; a `buildId` mismatch reloads once. Layout reads the `--safe-*` tokens, which prefer Telegram's `--tg-safe-area-inset-*` and fall back to `env(safe-area-inset-*)`; full-height screens use `--app-vh`, taken from `viewportStableHeight`.
 - Deployment is scripted: commit, push, then run `deploy/deploy.sh` on the host. It pulls fast-forward only, builds the images, and backs up the database before the new backend runs its migrations. Backups, their schedule, and restore are in [`docs/DEPLOY.md`](docs/DEPLOY.md). The host never holds hand-edited code. Never remove volumes there (`docker compose down -v`).
-- Commits: one logical change per commit; subject is one imperative English sentence stating the outcome; no type prefixes.
+- Commits: one logical change per commit, Conventional Commits `type: subject`. Types in lowercase: `feat`, `fix`, `docs`, `refactor`, `test`, `build`, `chore`, `ci`; `build` covers the Dockerfiles and lockfiles. The subject is imperative English stating the outcome, about one line, with no trailing period. A body only when the subject cannot say why. Example: `fix: reject initData older than one day`.
 
 ## Docs
 
